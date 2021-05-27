@@ -1,0 +1,34 @@
+{
+    "Project": {
+        "Name": "EcsProject",
+        "Stage": "Demo",
+        "Account": "75157*******",
+        "Region": "us-east-2",
+        "Profile": "cdk-demo"
+    },
+
+    "Stack": {
+        "VpcInfra": {
+            "Name": "VpcInfraStack",
+
+            "VPCName": "CommonVPC",
+            "VPCMaxAzs": 3,
+            "VPCCIDR": "10.0.0.0/16",
+            "NATGatewayCount": 1,
+
+            "ECSClusterName": "MainCluster"
+        },
+        "EcsAlb": {
+            "Name": "EcsAlbStack",
+
+            "InfraVersion": "'1.0.0'",
+
+            "PortNumber": 80,
+            "AppPath": "codes/sample-flask-web",
+
+            "RepoName": "sample-flask-web",
+
+            "DashboardName": "SampleFlaskWeb"
+        }
+    }
+}
