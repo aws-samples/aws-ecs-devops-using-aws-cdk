@@ -2,12 +2,12 @@ import * as cdk from '@aws-cdk/core';
 import * as ddb from '@aws-cdk/aws-dynamodb';
 import * as ecs from '@aws-cdk/aws-ecs';
 import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
-import * as loadBalancer from '@aws-cdk/aws-elasticloadbalancingv2';
+import * as lb2 from '@aws-cdk/aws-elasticloadbalancingv2';
 
 export interface EcsAlbMonitorProps {
     stackName: string;
     dashboardName: string;
-    alb: loadBalancer.ApplicationLoadBalancer;
+    alb: lb2.ApplicationLoadBalancer;
     ecsSrevice: ecs.FargateService;
     table: ddb.Table;
 }
@@ -23,7 +23,7 @@ export class EcsAlbMonitorConstrunct extends cdk.Construct {
         });
 
         this.addWidgets(
-            this.createWidget('ALB-Requests', [props.alb.metricRequestCount()], 12),
+            this.createWidget('ALB-Requests', [props.alb.metricRequestCount(), props.alb.metricHttpCodeTarget(lb2.HttpCodeTarget.TARGET_2XX_COUNT)], 12),
             this.createWidget('ALB-Response', [props.alb.metricTargetResponseTime()], 12),
         )
 
