@@ -1,5 +1,6 @@
 import * as ec2 from '@aws-cdk/aws-ec2';
 import * as ecs from '@aws-cdk/aws-ecs';
+import * as sd from '@aws-cdk/aws-servicediscovery';
 
 import * as base from '../../lib/template/stack/base/base-stack';
 import { AppContext } from '../../lib/template/app-context';
@@ -21,6 +22,11 @@ export class VpcInfraStack extends base.BaseStack {
             this.stackConfig.ECSClusterName,
             vpc);
         this.putParameter('ECSClusterName', ecsCluster.clusterName);
+
+        const cloudMapNamespacce = this.createCloudMapNamespace(ecsCluster);
+        this.putParameter('CloudMapNamespaceName', cloudMapNamespacce.namespaceName);
+        this.putParameter('CloudMapNamespaceArn', cloudMapNamespacce.namespaceArn);
+        this.putParameter('CloudMapNamespaceId', cloudMapNamespacce.namespaceId);
     }
 
     private createVpc(baseName: string, vpcMaxAzs: number, vpcCidr: string, natGateways: number): ec2.IVpc {
@@ -46,5 +52,14 @@ export class VpcInfraStack extends base.BaseStack {
         });
 
         return cluster;
+    }
+
+    private createCloudMapNamespace(cluster: ecs.Cluster): sd.INamespace {
+        const namespace = cluster.addDefaultCloudMapNamespace({
+            name: `${this.projectPrefix}-NS`,
+            type: sd.NamespaceType.DNS_PRIVATE
+        });
+
+        return namespace;
     }
 }
