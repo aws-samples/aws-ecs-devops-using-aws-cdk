@@ -20,6 +20,9 @@ import * as cdk from '@aws-cdk/core';
 import * as s3 from '@aws-cdk/aws-s3'
 import * as ssm from '@aws-cdk/aws-ssm'
 import * as iam from '@aws-cdk/aws-iam'
+import * as ec2 from '@aws-cdk/aws-ec2'
+import * as ecs from '@aws-cdk/aws-ecs'
+import * as sd from '@aws-cdk/aws-servicediscovery'
 
 import { AppContext } from '../../app-context'
 
@@ -34,6 +37,10 @@ export class BaseStack extends cdk.Stack {
     protected projectPrefix: string;
     protected commonProps: StackCommonProps;
     protected stackConfig: any;
+
+    protected vpc: ec2.IVpc;
+    protected ecsCluster: ecs.ICluster;
+    protected cloudMapNamespace: sd.INamespace;
 
     constructor(appContext: AppContext, stackConfig: any) {
         super(appContext.cdkApp, stackConfig.Name, appContext.stackCommonProps);
@@ -98,5 +105,39 @@ export class BaseStack extends cdk.Stack {
             this,
             paramKeyWithPrefix
         );
+    }
+
+    protected loadVpc(vpcStackConfig: any): ec2.IVpc {
+        if (this.vpc == undefined) {
+            this.vpc = ec2.Vpc.fromLookup(this, 'vpc', {
+                vpcName: `${vpcStackConfig.Name}/${vpcStackConfig.VPCName}`
+            });
+        }
+        return this.vpc;
+    }
+
+    protected loadCloudMapNamespace(): sd.IPrivateDnsNamespace {
+        if (this.cloudMapNamespace == undefined) {
+            this.cloudMapNamespace = sd.PrivateDnsNamespace.fromPrivateDnsNamespaceAttributes(this, 'cloud-map', {
+                namespaceName: this.getParameter('CloudMapNamespaceName'),
+                namespaceArn: this.getParameter('CloudMapNamespaceArn'),
+                namespaceId: this.getParameter('CloudMapNamespaceId'),
+            });
+        }
+
+        return this.cloudMapNamespace;
+    }
+
+    protected loadEcsCluster(vpc: ec2.IVpc, cloudMapNamespace?: sd.INamespace): ecs.ICluster {
+        if (this.ecsCluster == undefined) {
+            this.ecsCluster = ecs.Cluster.fromClusterAttributes(this, 'ecs-cluster', {
+                vpc,
+                clusterName: this.getParameter('ECSClusterName'),
+                securityGroups: [],
+                defaultCloudMapNamespace: cloudMapNamespace
+            });
+        }
+
+        return this.ecsCluster;
     }
 }
