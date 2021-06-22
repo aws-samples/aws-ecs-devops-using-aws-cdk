@@ -3,8 +3,8 @@ import 'source-map-support/register';
 
 import { AppContext } from '../lib/template/app-context';
 import { VpcInfraStack } from './common-infra/vpc-infra-stack';
-import { EcsAlbStack } from './ecs-service/ecs-alb-stack';
-import { EcsTaskStack } from './ecs-service/ecs-task-stack';
+import { EcsAlbServiceStack } from './ecs-service/ecs-alb-service-stack';
+import { EcsCommonServiceStack } from './ecs-service/ecs-common-service-stack';
 
 
 const appContext = new AppContext({
@@ -14,8 +14,8 @@ const appContext = new AppContext({
 if (appContext.stackCommonProps != undefined) {
     new VpcInfraStack(appContext, appContext.appConfig.Stack.VpcInfra);
 
-    new EcsAlbStack(appContext, appContext.appConfig.Stack.EcsAlb);
-    new EcsAlbStack(appContext, appContext.appConfig.Stack.EcsFrontend);
+    new EcsAlbServiceStack(appContext, appContext.appConfig.Stack.SampleBackendFastapi);
+    new EcsAlbServiceStack(appContext, appContext.appConfig.Stack.SampleFrontendFlask);
 
-    new EcsTaskStack(appContext, appContext.appConfig.Stack.EcsTask);
+    new EcsCommonServiceStack(appContext, appContext.appConfig.Stack.LoadTesterScript);
 }

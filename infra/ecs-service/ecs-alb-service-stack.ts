@@ -1,19 +1,14 @@
-import * as cdk from '@aws-cdk/core';
-import * as ec2 from '@aws-cdk/aws-ec2';
-import * as ecs from '@aws-cdk/aws-ecs';
-
 import * as base from '../../lib/template/stack/base/base-stack';
 import { AppContext } from '../../lib/template/app-context';
 
-import { EcsAlbInfraConstrunct } from './ecs-alb-infra-const'
-import { EcsAlbCicdConstrunct } from './ecs-alb-cicd-const'
-import { EcsAlbMonitorConstrunct } from './ecs-alb-monitor-const'
+import { EcsAlbInfraConstrunct } from './construct/ecs-alb-infra-const'
+import { EcsAlbCicdConstrunct } from './construct/ecs-alb-cicd-const'
+import { EcsAlbMonitorConstrunct } from './construct/ecs-alb-monitor-const'
 
-export class EcsAlbStack extends base.BaseStack {
+export class EcsAlbServiceStack extends base.BaseStack {
 
     constructor(appContext: AppContext, stackConfig: any) {
         super(appContext, stackConfig);
-
 
         const vpc = this.loadVpc(this.commonProps.appConfig.Stack.VpcInfra);
         const cloudMapNamespace = this.loadCloudMapNamespace();
@@ -26,7 +21,12 @@ export class EcsAlbStack extends base.BaseStack {
             infraVersion: this.stackConfig.InfraVersion,
             containerPort: this.stackConfig.PortNumber,
             dockerPath: this.stackConfig.AppPath,
-            internetFacing: this.stackConfig.InternetFacing
+            internetFacing: this.stackConfig.InternetFacing,
+            desiredTasks: this.stackConfig.DesiredTasks,
+            autoscaling: this.stackConfig.AutoScalingEnable,
+            minTasks: this.stackConfig.AutoScalingMinCapacity,
+            maxTasks: this.stackConfig.AutoScalingMaxCapacity,
+            tableName: this.stackConfig.TableName,
         });
 
         new EcsAlbCicdConstrunct(this, 'EcsAlbCicdConstrunct', {

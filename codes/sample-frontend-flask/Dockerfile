@@ -6,6 +6,6 @@ pip install --upgrade pip && \
 pip install flask
 
 WORKDIR /app
-COPY . /app/
+COPY ./app/ /app/
 
-CMD ["python", "app.py"]
+CMD ["python", "main.py"]

@@ -14,6 +14,11 @@ export interface EcsAlbInfraProps {
     containerPort: number;
     internetFacing: boolean;
     dockerPath: string;
+    desiredTasks: number;
+    autoscaling: boolean;
+    minTasks: number;
+    maxTasks: number;
+    tableName?: string;
 }
 
 export class EcsAlbInfraConstrunct extends cdk.Construct {
@@ -26,14 +31,17 @@ export class EcsAlbInfraConstrunct extends cdk.Construct {
     constructor(scope: cdk.Construct, id: string, props: EcsAlbInfraProps) {
         super(scope, id);
 
-        this.table = new ddb.Table(this, 'table', {
-            tableName: `${props.stackName}-DataTable`,
-            partitionKey: {
-                name: 'id',
-                type: ddb.AttributeType.STRING
-            },
-            removalPolicy: cdk.RemovalPolicy.DESTROY // not recommended for Prod
-        });
+        if (props.tableName != undefined) {
+            this.table = new ddb.Table(this, 'table', {
+                tableName: `${props.stackName}-${props.tableName}`,
+                partitionKey: {
+                    name: 'id',
+                    type: ddb.AttributeType.STRING
+                },
+                removalPolicy: cdk.RemovalPolicy.DESTROY // not recommended for Prod
+            });
+
+        }
 
         const alb = new loadBalancer.ApplicationLoadBalancer(this, `alb`, {
             // loadBalancerName: `${this.stackName}`.substr(0, 32),
@@ -50,7 +58,7 @@ export class EcsAlbInfraConstrunct extends cdk.Construct {
             memoryLimitMiB: 1024,
             
             cpu: 512,
-            desiredCount: 2,
+            desiredCount: props.desiredTasks,
             taskImageOptions: {
                 // image: ecs.ContainerImage.fromRegistry("amazon/amazon-ecs-sample"),
                 image: ecs.ContainerImage.fromAsset(props.dockerPath),
@@ -59,7 +67,7 @@ export class EcsAlbInfraConstrunct extends cdk.Construct {
                     APP_NAME: props.stackName,
                     INFRA_VERSION: props.infraVersion,
                     CONTAINER_SERVICE: 'AWS ECS',
-                    DDB_TABLE: this.table.tableName,
+                    DDB_TABLE: props.tableName != undefined ? this.table.tableName : 'no-table',
                     PORT_IN: `${props.containerPort}`
                 },
                 logDriver: new ecs.AwsLogDriver({
@@ -67,7 +75,6 @@ export class EcsAlbInfraConstrunct extends cdk.Construct {
                 }),
                 enableLogging: true,
                 taskRole: this.createTaskRole(baseName),
-                // executionRole: this.createExecutionRole(baseName),
                 containerPort: props.containerPort
             },
             cloudMapOptions: {
@@ -91,13 +98,8 @@ export class EcsAlbInfraConstrunct extends cdk.Construct {
             effect: iam.Effect.ALLOW,
             resources: ['*'],
             actions: [
-                // "ecr:GetAuthorizationToken",
-                // "ecr:BatchCheckLayerAvailability",
-                // "ecr:GetDownloadUrlForLayer",
-                // "ecr:BatchGetImage",
-                // "logs:CreateLogStream",
-                // "logs:PutLogEvents",
-                "dynamodb:*"
+                "dynamodb:Scan",
+                "dynamodb:PutItem",
             ]
         }));
 

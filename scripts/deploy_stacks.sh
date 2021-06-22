@@ -26,7 +26,8 @@ echo .
 
 echo ==--------DeployStacksStepByStep---------==
 cdk deploy *-VpcInfraStack --require-approval never --profile $PROFILE_NAME
-cdk deploy *-EcsAlbStack --require-approval never --profile $PROFILE_NAME
-cdk deploy *-EcsTaskStack --require-approval never --profile $PROFILE_NAME
+cdk deploy *-SampleBackendFastapiStack --require-approval never --profile $PROFILE_NAME
+cdk deploy *-SampleFrontendFlaskStack --require-approval never --profile $PROFILE_NAME
+cdk deploy *-LoadTesterScriptStack --require-approval never --profile $PROFILE_NAME
 echo .
 echo .

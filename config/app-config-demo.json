@@ -19,37 +19,49 @@
 
             "ECSClusterName": "MainCluster"
         },
-        "EcsAlb": {
-            "Name": "EcsAlbStack",
-
+        "SampleBackendFastapi": {
+            "Name": "SampleBackendFastapiStack",
             "InfraVersion": "'1.0.0'",
+            "AppPath": "codes/sample-backend-fastapi",
 
             "PortNumber": 80,
             "InternetFacing": false,
-            "AppPath": "codes/sample-fastapi-backend",
+            "TableName": "LogTable",
 
-            "RepoName": "sample-flask-web",
+            "DesiredTasks": 1,
+            "AutoScalingEnable": false,
+            "AutoScalingMinCapacity": 1,
+            "AutoScalingMaxCapacity": 2,
+            "AutoScalingTargetInvocation": 50,
 
-            "DashboardName": "BackendFlaskWeb"
+            "RepoGitName": "sample-backend-fastapi",
+            "RepoEcrName": "sample-backend-fastapi",
+            "DashboardName": "SampleBackendFastapi"
         },
-        "EcsFrontend": {
-            "Name": "EcsFrontendStack",
-
+        "SampleFrontendFlask": {
+            "Name": "SampleFrontendFlaskStack",
             "InfraVersion": "'1.0.0'",
+            "AppPath": "codes/sample-frontend-flask",
 
             "PortNumber": 80,
             "InternetFacing": true,
-            "AppPath": "codes/sample-flask-web",
 
-            "RepoName": "ssss-xxxx",
+            "DesiredTasks": 1,
+            "AutoScalingEnable": false,
+            "AutoScalingMinCapacity": 1,
+            "AutoScalingMaxCapacity": 2,
+            "AutoScalingTargetInvocation": 50,
 
-            "DashboardName": "SampleFlaskWeb"
+            "RepoGitName": "sample-frontend-flask",
+            "RepoEcrName": "sample-frontend-flask",
+            "DashboardName": "SampleFrontendFlask"
         },
-        "EcsTask": {
-            "Name": "EcsTaskStack",
+        "LoadTesterScript": {
+            "Name": "LoadTesterScriptStack",
+            "AppPath": "codes/load-tester-script",
 
-            "AppPath": "codes/sample-flask-web"
-
+            "DesiredTasks": 1,
+            "TargetStack": "SampleBackendFastapi"
         }
     }
 }

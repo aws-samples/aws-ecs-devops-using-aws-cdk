@@ -4,7 +4,7 @@ import * as base from '../../lib/template/stack/base/base-stack';
 import { AppContext } from '../../lib/template/app-context';
 
 
-export class EcsTaskStack extends base.BaseStack {
+export class EcsCommonServiceStack extends base.BaseStack {
 
     constructor(appContext: AppContext, stackConfig: any) {
         super(appContext, stackConfig);
@@ -26,14 +26,13 @@ export class EcsTaskStack extends base.BaseStack {
 
         const container = taskDefinition.addContainer("Container", {
             containerName: `${baseName}Container`,
-            image: ecs.ContainerImage.fromAsset('codes/load-test-script'),
-            // image: ecs.ContainerImage.fromRegistry("amazon/amazon-ecs-sample"),
+            image: ecs.ContainerImage.fromAsset(this.stackConfig.AppPath),
             logging: new ecs.AwsLogDriver({
                 streamPrefix: `${baseName}Log`
             }),
             environment: {
                 Namespace: `${this.projectPrefix}-NS`,
-                TargetServiceName: this.commonProps.appConfig.Stack.EcsAlb.Name
+                TargetServiceName: this.commonProps.appConfig.Stack[this.stackConfig.TargetStack].Name
             }
         });
 
@@ -41,7 +40,7 @@ export class EcsTaskStack extends base.BaseStack {
             serviceName: `${baseName}Service`,
             cluster,
             taskDefinition,
-            desiredCount: 1,
+            desiredCount: this.stackConfig.DesiredTasks,
             cloudMapOptions: {
                 name: this.stackName,
             }
