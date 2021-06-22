@@ -2,7 +2,8 @@
     "Project": {
         "Name": "EcsProject",
         "Stage": "Demo",
-        "Account": "75157*******",
+        "Account": "751571716296",
+        "Account2": "75157*******",
         "Region": "us-east-2",
         "Profile": "cdk-demo"
     },
@@ -24,11 +25,31 @@
             "InfraVersion": "'1.0.0'",
 
             "PortNumber": 80,
-            "AppPath": "codes/sample-flask-web",
+            "InternetFacing": false,
+            "AppPath": "codes/sample-fastapi-backend",
 
             "RepoName": "sample-flask-web",
 
+            "DashboardName": "BackendFlaskWeb"
+        },
+        "EcsFrontend": {
+            "Name": "EcsFrontendStack",
+
+            "InfraVersion": "'1.0.0'",
+
+            "PortNumber": 80,
+            "InternetFacing": true,
+            "AppPath": "codes/sample-flask-web",
+
+            "RepoName": "ssss-xxxx",
+
             "DashboardName": "SampleFlaskWeb"
+        },
+        "EcsTask": {
+            "Name": "EcsTaskStack",
+
+            "AppPath": "codes/sample-flask-web"
+
         }
     }
 }

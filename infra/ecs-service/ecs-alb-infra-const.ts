@@ -12,6 +12,8 @@ export interface EcsAlbInfraProps {
     cluster: ecs.ICluster;
     infraVersion: string;
     containerPort: number;
+    internetFacing: boolean;
+    dockerPath: string;
 }
 
 export class EcsAlbInfraConstrunct extends cdk.Construct {
@@ -33,41 +35,55 @@ export class EcsAlbInfraConstrunct extends cdk.Construct {
             removalPolicy: cdk.RemovalPolicy.DESTROY // not recommended for Prod
         });
 
+        const alb = new loadBalancer.ApplicationLoadBalancer(this, `alb`, {
+            // loadBalancerName: `${this.stackName}`.substr(0, 32),
+            vpc: props.vpc,
+            // securityGroup: albSG,
+            internetFacing: props.internetFacing
+        });
+
         const baseName = props.stackName;
         this.containerName = `${baseName}Container`
         const albFargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'Service', {
             cluster: props.cluster,
+            loadBalancer: alb,
             memoryLimitMiB: 1024,
+            
             cpu: 512,
             desiredCount: 2,
             taskImageOptions: {
-                image: ecs.ContainerImage.fromRegistry("amazon/amazon-ecs-sample"),
+                // image: ecs.ContainerImage.fromRegistry("amazon/amazon-ecs-sample"),
+                image: ecs.ContainerImage.fromAsset(props.dockerPath),
                 containerName: this.containerName,
                 environment: {
                     APP_NAME: props.stackName,
                     INFRA_VERSION: props.infraVersion,
                     CONTAINER_SERVICE: 'AWS ECS',
-                    TABLE_NAME: this.table.tableName,
+                    DDB_TABLE: this.table.tableName,
                     PORT_IN: `${props.containerPort}`
                 },
                 logDriver: new ecs.AwsLogDriver({
                     streamPrefix: `${baseName}Log`
                 }),
                 enableLogging: true,
-                executionRole: this.createExecutionRole(baseName),
+                taskRole: this.createTaskRole(baseName),
+                // executionRole: this.createExecutionRole(baseName),
                 containerPort: props.containerPort
+            },
+            cloudMapOptions: {
+                name: props.stackName,
             },
             circuitBreaker: {
                 rollback: true
-            }            
+            },
         });
         this.service = albFargateService.service;
         this.alb = albFargateService.loadBalancer;
     }
 
-    private createExecutionRole(baseName: string): iam.Role {
-        const role = new iam.Role(this, `ExecutionRole`, {
-            roleName: `${baseName}Role`,
+    private createTaskRole(baseName: string): iam.Role {
+        const role = new iam.Role(this, `TaskRole`, {
+            roleName: `${baseName}TaskRole`,
             assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com')
         });
 
@@ -75,12 +91,12 @@ export class EcsAlbInfraConstrunct extends cdk.Construct {
             effect: iam.Effect.ALLOW,
             resources: ['*'],
             actions: [
-                "ecr:GetAuthorizationToken",
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:BatchGetImage",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents",
+                // "ecr:GetAuthorizationToken",
+                // "ecr:BatchCheckLayerAvailability",
+                // "ecr:GetDownloadUrlForLayer",
+                // "ecr:BatchGetImage",
+                // "logs:CreateLogStream",
+                // "logs:PutLogEvents",
                 "dynamodb:*"
             ]
         }));

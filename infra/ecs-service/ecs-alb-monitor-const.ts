@@ -4,12 +4,14 @@ import * as ecs from '@aws-cdk/aws-ecs';
 import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
 import * as lb2 from '@aws-cdk/aws-elasticloadbalancingv2';
 
+const REFRESH_PERIOD_IN_MIN: number = 1;
+
 export interface EcsAlbMonitorProps {
     stackName: string;
     dashboardName: string;
     alb: lb2.ApplicationLoadBalancer;
     ecsSrevice: ecs.FargateService;
-    table: ddb.Table;
+    table?: ddb.Table;
 }
 
 export class EcsAlbMonitorConstrunct extends cdk.Construct {
@@ -24,7 +26,7 @@ export class EcsAlbMonitorConstrunct extends cdk.Construct {
 
         this.addWidgets(
             this.createWidget('ALB-Requests', [props.alb.metricRequestCount(), props.alb.metricHttpCodeTarget(lb2.HttpCodeTarget.TARGET_2XX_COUNT)], 12),
-            this.createWidget('ALB-Response', [props.alb.metricTargetResponseTime()], 12),
+            this.createWidget('ALB-Response', [props.alb.metricTargetResponseTime({unit: cloudwatch.Unit.MILLISECONDS})], 12),
         )
 
         this.addWidgets(
@@ -32,11 +34,15 @@ export class EcsAlbMonitorConstrunct extends cdk.Construct {
             this.createWidget('ECS-Memory', [props.ecsSrevice.metricMemoryUtilization()], 12),
         )
 
-        this.addWidgets(
-            this.createWidget('DDB-Read', [props.table.metricConsumedReadCapacityUnits()], 8),
-            this.createWidget('DDB-Write', [props.table.metricConsumedWriteCapacityUnits()], 8),
-            this.createWidget('DDB-Requests', [props.table.metricThrottledRequests()], 8),
-        )
+        if (props.table != undefined) {
+            this.addWidgets(
+                this.createWidget('DDB-Read', [props.table.metricConsumedReadCapacityUnits()], 12),
+                this.createWidget('DDB-Write', [props.table.metricConsumedWriteCapacityUnits()], 12),
+                this.createWidget('DDB-Latency', [props.table.metricSuccessfulRequestLatency({dimensions: {Operation: 'Scan'}}), 
+                                                    props.table.metricSuccessfulRequestLatency({dimensions: {Operation: 'PutItem'}})], 12),
+                this.createWidget('DDB-Throttled', [props.table.metricThrottledRequests()], 12),
+            )
+        }
     }
 
     private addWidgets(...widgets: cloudwatch.IWidget[]): void {
@@ -47,7 +53,8 @@ export class EcsAlbMonitorConstrunct extends cdk.Construct {
         const widget = new cloudwatch.GraphWidget({
             title: name,
             left: metrics,
-            width: width
+            width: width,
+            period: cdk.Duration.minutes(REFRESH_PERIOD_IN_MIN),
         });
         return widget;
     }

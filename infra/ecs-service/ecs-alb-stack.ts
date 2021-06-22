@@ -14,28 +14,24 @@ export class EcsAlbStack extends base.BaseStack {
     constructor(appContext: AppContext, stackConfig: any) {
         super(appContext, stackConfig);
 
-        const vpcInfraStackConfig = this.commonProps.appConfig.Stack.VpcInfra;
-        const vpc = ec2.Vpc.fromLookup(this, 'vpc', {
-            vpcName: `${vpcInfraStackConfig.Name}/${vpcInfraStackConfig.VPCName}`
-        });
 
-        const cluster = ecs.Cluster.fromClusterAttributes(this, 'ecs-cluster', {
-            vpc: vpc,
-            clusterName: this.getParameter('ECSClusterName'),
-            securityGroups: []
-        });
+        const vpc = this.loadVpc(this.commonProps.appConfig.Stack.VpcInfra);
+        const cloudMapNamespace = this.loadCloudMapNamespace();
+        const ecsCluster = this.loadEcsCluster(vpc, cloudMapNamespace);
         
         const infra = new EcsAlbInfraConstrunct(this, 'EcsAlbInfraConstrunct', {
             vpc: vpc,
-            cluster: cluster,
+            cluster: ecsCluster,
             stackName: this.stackName,
             infraVersion: this.stackConfig.InfraVersion,
-            containerPort: this.stackConfig.PortNumber
+            containerPort: this.stackConfig.PortNumber,
+            dockerPath: this.stackConfig.AppPath,
+            internetFacing: this.stackConfig.InternetFacing
         });
 
         new EcsAlbCicdConstrunct(this, 'EcsAlbCicdConstrunct', {
             vpc: vpc,
-            cluster: cluster,
+            cluster: ecsCluster,
             stackName: this.stackName,
             service: infra.service,
             containerName: infra.containerName,

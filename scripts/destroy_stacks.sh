@@ -17,6 +17,7 @@ echo .
 echo .
 
 echo ==--------DestroyStacksStepByStep---------==
+cdk destroy *-EcsTaskStack --force --profile $PROFILE_NAME
 cdk destroy *-EcsAlbStack --force --profile $PROFILE_NAME
 cdk destroy *-VpcInfraStack --force --profile $PROFILE_NAME
 echo .

@@ -2,6 +2,7 @@ import flask
 import datetime
 import platform
 import os
+import requests
 
 print('----------load')
 
@@ -20,6 +21,11 @@ def hello():
     infra_version = os.environ.get('INFRA_VERSION', '0.0.0')
     python_version = platform.python_version()
     now = datetime.datetime.now()
+
+    print('===start')
+    url = 'http://{}.{}/'.format('EcsProjectDemo-EcsAlbStack', 'EcsProjectDemo-NS')
+    body = requests.get(url, timeout=1).text
+    print('===body', body)
 
     return flask.render_template('index.html',
                                  name=app_name,
