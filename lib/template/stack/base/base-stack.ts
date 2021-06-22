@@ -19,7 +19,6 @@
 import * as cdk from '@aws-cdk/core';
 import * as s3 from '@aws-cdk/aws-s3'
 import * as ssm from '@aws-cdk/aws-ssm'
-import * as iam from '@aws-cdk/aws-iam'
 import * as ec2 from '@aws-cdk/aws-ec2'
 import * as ecs from '@aws-cdk/aws-ecs'
 import * as sd from '@aws-cdk/aws-servicediscovery'
@@ -52,7 +51,7 @@ export class BaseStack extends cdk.Stack {
 
     protected exportOutput(key: string, value: string) {
         new cdk.CfnOutput(this, `Output-${key}`, {
-            exportName: `${this.projectPrefix}-${key}`,
+            exportName: `${this.stackName}-${key}`,
             value: value
         });
     }
@@ -61,7 +60,7 @@ export class BaseStack extends cdk.Stack {
         const suffix: string = `${this.commonProps.env?.region}-${this.commonProps.env?.account?.substr(0, 5)}`
 
         const s3Bucket = new s3.Bucket(this, baseName, {
-            bucketName: `${this.projectPrefix}-${baseName}-${suffix}`.toLowerCase().replace('_', '-'),
+            bucketName: `${this.stackName}-${baseName}-${suffix}`.toLowerCase().replace('_', '-'),
             versioned: false,
             removalPolicy: cdk.RemovalPolicy.RETAIN // for prod, RETAIN is safe
         });
@@ -73,22 +72,8 @@ export class BaseStack extends cdk.Stack {
         return s3.Bucket.fromBucketName(this, id, bucketName);
     }
 
-    protected importS3BucketByParam(paramKey: string): s3.IBucket {
-        const bucketName = this.getParameter(paramKey);
-        return this.importS3BucketByName(paramKey, bucketName);
-    }
-    
-    protected importIamRoleByArn(id: string, roleArn: string): iam.IRole {
-        return iam.Role.fromRoleArn(this, id, roleArn);
-    }
-
-    protected importIamRoleByParam(paramKey: string): iam.IRole {
-        const roleArn = this.getParameter(paramKey);
-        return this.importIamRoleByArn(paramKey, roleArn);
-    }
-
     protected putParameter(paramKey: string, paramValue: string): string {
-        const paramKeyWithPrefix = `${this.projectPrefix}-${paramKey}`;
+        const paramKeyWithPrefix = `${this.stackName}-${paramKey}`;
 
         new ssm.StringParameter(this, paramKey, {
             parameterName: paramKeyWithPrefix,
@@ -98,8 +83,8 @@ export class BaseStack extends cdk.Stack {
         return paramKey;
     }
 
-    protected getParameter(paramKey: string): string {
-        const paramKeyWithPrefix = `${this.projectPrefix}-${paramKey}`;
+    protected getParameter(stackName: string, paramKey: string): string {
+        const paramKeyWithPrefix = `${stackName}-${paramKey}`;
         
         return ssm.StringParameter.valueForStringParameter(
             this,
@@ -116,23 +101,23 @@ export class BaseStack extends cdk.Stack {
         return this.vpc;
     }
 
-    protected loadCloudMapNamespace(): sd.IPrivateDnsNamespace {
+    protected loadCloudMapNamespace(ecsClusterStackName: string): sd.IPrivateDnsNamespace {
         if (this.cloudMapNamespace == undefined) {
             this.cloudMapNamespace = sd.PrivateDnsNamespace.fromPrivateDnsNamespaceAttributes(this, 'cloud-map', {
-                namespaceName: this.getParameter('CloudMapNamespaceName'),
-                namespaceArn: this.getParameter('CloudMapNamespaceArn'),
-                namespaceId: this.getParameter('CloudMapNamespaceId'),
+                namespaceName: this.getParameter(ecsClusterStackName, 'CloudMapNamespaceName'),
+                namespaceArn: this.getParameter(ecsClusterStackName, 'CloudMapNamespaceArn'),
+                namespaceId: this.getParameter(ecsClusterStackName, 'CloudMapNamespaceId'),
             });
         }
 
         return this.cloudMapNamespace;
     }
 
-    protected loadEcsCluster(vpc: ec2.IVpc, cloudMapNamespace?: sd.INamespace): ecs.ICluster {
+    protected loadEcsCluster(ecsClusterStackName: string, vpc: ec2.IVpc, cloudMapNamespace?: sd.INamespace): ecs.ICluster {
         if (this.ecsCluster == undefined) {
             this.ecsCluster = ecs.Cluster.fromClusterAttributes(this, 'ecs-cluster', {
                 vpc,
-                clusterName: this.getParameter('ECSClusterName'),
+                clusterName: this.getParameter(ecsClusterStackName, 'ECSClusterName'),
                 securityGroups: [],
                 defaultCloudMapNamespace: cloudMapNamespace
             });

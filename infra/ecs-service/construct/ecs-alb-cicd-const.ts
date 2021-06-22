@@ -8,30 +8,33 @@ import * as codebuild from '@aws-cdk/aws-codebuild';
 import * as codepipeline from '@aws-cdk/aws-codepipeline';
 import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions';
 
+import * as base from '../../../lib/template/construct/base/base-construct'
 
-export interface EcsAlbCicdProps {
+
+export interface EcsAlbCicdProps extends base.ConstructProps {
     vpc: ec2.IVpc;
     cluster: ecs.ICluster;
     stackName: string;
     service: ecs.IBaseService;
     appPath: string;
     containerName: string;
-    repoName: string;
 }
 
-export class EcsAlbCicdConstrunct extends cdk.Construct {
+export class EcsAlbCicdConstrunct extends base.BaseConstruct {
 
     constructor(scope: cdk.Construct, id: string, props: EcsAlbCicdProps) {
-        super(scope, id);
+        super(scope, id, props);
+
+        const repoName = 'repo';
 
         const repo = new codecommit.Repository(this, `${props.stackName}Repository`, {
-            repositoryName: `${props.stackName}-${props.repoName}`.toLowerCase(),
-            description: 'service team cicd',
+            repositoryName: `${props.stackName}-${repoName}`.toLowerCase(),
+            description: props.stackName,
         });
         new cdk.CfnOutput(this, 'CodeCommit Name', { value: repo.repositoryName });
 
         const ecrRepo = new ecr.Repository(this, `${props.stackName}EcrRepository`, {
-            repositoryName: `${props.stackName}-${props.repoName}`.toLowerCase()
+            repositoryName: `${props.stackName}-${repoName}`.toLowerCase()
         });
 
         const sourceOutput = new codepipeline.Artifact();

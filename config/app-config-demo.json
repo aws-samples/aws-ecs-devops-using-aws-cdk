@@ -22,46 +22,54 @@
         "SampleBackendFastapi": {
             "Name": "SampleBackendFastapiStack",
             "InfraVersion": "'1.0.0'",
-            "AppPath": "codes/sample-backend-fastapi",
-
+            
             "PortNumber": 80,
             "InternetFacing": false,
-            "TableName": "LogTable",
-
+            
+            "AppPath": "codes/sample-backend-fastapi",
             "DesiredTasks": 1,
+            "Cpu": 1024,
+            "Memory": 2048,
+
             "AutoScalingEnable": false,
             "AutoScalingMinCapacity": 1,
             "AutoScalingMaxCapacity": 2,
             "AutoScalingTargetInvocation": 50,
 
-            "RepoGitName": "sample-backend-fastapi",
-            "RepoEcrName": "sample-backend-fastapi",
-            "DashboardName": "SampleBackendFastapi"
+            "TableName": "LogTable",
+
+            "AlarmThreshold": 200,
+            "SubscriptionEmails": ["kwonyul@amazon.com"]
         },
         "SampleFrontendFlask": {
             "Name": "SampleFrontendFlaskStack",
             "InfraVersion": "'1.0.0'",
-            "AppPath": "codes/sample-frontend-flask",
-
+            
             "PortNumber": 80,
             "InternetFacing": true,
 
+            "TargetStack": "SampleBackendFastapi",
+            
+            "AppPath": "codes/sample-frontend-flask",
             "DesiredTasks": 1,
+            "Cpu": 1024,
+            "Memory": 2048,
+
             "AutoScalingEnable": false,
             "AutoScalingMinCapacity": 1,
             "AutoScalingMaxCapacity": 2,
             "AutoScalingTargetInvocation": 50,
 
-            "RepoGitName": "sample-frontend-flask",
-            "RepoEcrName": "sample-frontend-flask",
-            "DashboardName": "SampleFrontendFlask"
+            "AlarmThreshold": 200,
+            "SubscriptionEmails": ["kwonyul@amazon.com"]
         },
         "LoadTesterScript": {
             "Name": "LoadTesterScriptStack",
-            "AppPath": "codes/load-tester-script",
 
-            "DesiredTasks": 1,
-            "TargetStack": "SampleBackendFastapi"
+            "TargetStack": "SampleBackendFastapi",
+
+            "AppPath": "codes/load-tester-script",
+            "DesiredTasks": 1
         }
     }
 }
