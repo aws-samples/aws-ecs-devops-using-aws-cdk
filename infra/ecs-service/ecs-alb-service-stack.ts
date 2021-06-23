@@ -1,9 +1,10 @@
 import * as base from '../../lib/template/stack/base/base-stack';
 import { AppContext } from '../../lib/template/app-context';
 
-import { EcsAlbInfraConstrunct } from './construct/ecs-alb-infra-const'
-import { EcsAlbCicdConstrunct } from './construct/ecs-alb-cicd-const'
-import { EcsAlbMonitorConstrunct } from './construct/ecs-alb-monitor-const'
+import { EcsRepoConstrunct } from './construct/ecs-repo-const'
+import { EcsInfraConstrunct } from './construct/ecs-infra-const'
+import { EcsCicdConstrunct } from './construct/ecs-cicd-const'
+import { EcsAlbMonitorConstrunct } from './construct/ecs-monitor-const'
 
 export class EcsAlbServiceStack extends base.BaseStack {
 
@@ -14,13 +15,21 @@ export class EcsAlbServiceStack extends base.BaseStack {
         const vpc = this.loadVpc(this.commonProps.appConfig.Stack.VpcInfra);
         const cloudMapNamespace = this.loadCloudMapNamespace(ecsClusterStackName);
         const ecsCluster = this.loadEcsCluster(ecsClusterStackName, vpc, cloudMapNamespace);
+
+        const repo = new EcsRepoConstrunct(this, 'EcsAlbRepoConstrunct', {
+            stackName: this.stackName,
+            projectPrefix: this.projectPrefix,
+            stackConfig: this.stackConfig,
+            appConfig: this.commonProps.appConfig
+        });
         
-        const infra = new EcsAlbInfraConstrunct(this, 'EcsAlbInfraConstrunct', {
+        const infra = new EcsInfraConstrunct(this, 'EcsAlbInfraConstrunct', {
             stackName: this.stackName,
             projectPrefix: this.projectPrefix,
             stackConfig: this.stackConfig,
             appConfig: this.commonProps.appConfig,
             infraVersion: this.stackConfig.InfraVersion,
+            dockerImageType: this.stackConfig.DockerImageType,
             vpc: vpc,
             cluster: ecsCluster,
             internetFacing: this.stackConfig.InternetFacing,
@@ -35,7 +44,7 @@ export class EcsAlbServiceStack extends base.BaseStack {
             tableName: this.stackConfig.TableName,
         });
 
-        new EcsAlbCicdConstrunct(this, 'EcsAlbCicdConstrunct', {
+        new EcsCicdConstrunct(this, 'EcsAlbCicdConstrunct', {
             stackName: this.stackName,
             projectPrefix: this.projectPrefix,
             stackConfig: this.stackConfig,
@@ -45,6 +54,8 @@ export class EcsAlbServiceStack extends base.BaseStack {
             service: infra.service,
             containerName: infra.containerName,
             appPath: this.stackConfig.AppPath,
+            repo: repo.gitRepo,
+            ecrRepo: repo.ecrRepo
         });
 
         new EcsAlbMonitorConstrunct(this, 'EcsAlbMonitorConstrunct', {

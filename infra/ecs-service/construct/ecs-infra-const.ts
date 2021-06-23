@@ -3,16 +3,19 @@ import * as ec2 from '@aws-cdk/aws-ec2';
 import * as ddb from '@aws-cdk/aws-dynamodb';
 import * as iam from '@aws-cdk/aws-iam';
 import * as ecs from '@aws-cdk/aws-ecs';
+import * as ecr from '@aws-cdk/aws-ecr';
 import * as ecsPatterns from '@aws-cdk/aws-ecs-patterns';
 import * as loadBalancer from '@aws-cdk/aws-elasticloadbalancingv2';
 
 import * as base from '../../../lib/template/construct/base/base-construct'
 
-export interface EcsAlbInfraProps extends base.ConstructProps  {
+export interface EcsInfraProps extends base.ConstructProps  {
     stackName: string;
     infraVersion: string;
     vpc: ec2.IVpc;
     cluster: ecs.ICluster;
+    dockerImageType: string;
+    ecrRepo?: ecr.Repository;
     containerPort: number;
     internetFacing: boolean;
     dockerPath: string;
@@ -25,13 +28,13 @@ export interface EcsAlbInfraProps extends base.ConstructProps  {
     tableName?: string;
 }
 
-export class EcsAlbInfraConstrunct extends base.BaseConstruct {
+export class EcsInfraConstrunct extends base.BaseConstruct {
     table: ddb.Table;
     containerName: string;
     service: ecs.FargateService;
     alb: loadBalancer.ApplicationLoadBalancer;
 
-    constructor(scope: cdk.Construct, id: string, props: EcsAlbInfraProps) {
+    constructor(scope: cdk.Construct, id: string, props: EcsInfraProps) {
         super(scope, id, props);
 
         if (props.tableName != undefined) {
@@ -66,16 +69,16 @@ export class EcsAlbInfraConstrunct extends base.BaseConstruct {
             cpu: props.cpu,
             memoryLimitMiB: props.memory,
             taskImageOptions: {
-                image: ecs.ContainerImage.fromRegistry("amazon/amazon-ecs-sample"),
+                image: this.getContainerImage(props),
                 containerName: this.containerName,
                 environment: {
                     APP_NAME: props.stackName,
                     INFRA_VERSION: props.infraVersion,
                     CONTAINER_SERVICE: 'AWS ECS',
-                    Namespace: `${props.projectPrefix}-NS`,
-                    TargetServiceName: targetServiceStackName != undefined ? targetServiceStackName : 'not-defined',
                     DDB_TABLE: props.tableName != undefined ? this.table.tableName : 'no-table',
-                    PORT_IN: `${props.containerPort}`
+                    PORT_IN: `${props.containerPort}`,
+                    Namespace: `${props.projectPrefix}-NS`,
+                    TargetServiceName: targetServiceStackName != undefined ? targetServiceStackName : 'not-defined'
                 },
                 logDriver: new ecs.AwsLogDriver({
                     streamPrefix: `${baseName}Log`
@@ -83,6 +86,7 @@ export class EcsAlbInfraConstrunct extends base.BaseConstruct {
                 enableLogging: true,
                 containerPort: props.containerPort,
                 taskRole: this.createTaskRole(baseName),
+                executionRole: this.createExecutionRole(baseName)
             },
             cloudMapOptions: {
                 name: props.stackName,
@@ -105,6 +109,16 @@ export class EcsAlbInfraConstrunct extends base.BaseConstruct {
         }
     }
 
+    private getContainerImage(props: EcsInfraProps): ecs.ContainerImage {
+        if (props.dockerImageType == 'HUB') {
+            return ecs.ContainerImage.fromRegistry("amazon/amazon-ecs-sample");
+        } else if (props.dockerImageType == 'ECR') {
+            return ecs.ContainerImage.fromEcrRepository(props.ecrRepo!);
+        } else {
+            return ecs.ContainerImage.fromAsset(props.dockerPath);
+        }
+    }
+
     private createTaskRole(baseName: string): iam.Role {
         const role = new iam.Role(this, `TaskRole`, {
             roleName: `${baseName}TaskRole`,
@@ -117,6 +131,34 @@ export class EcsAlbInfraConstrunct extends base.BaseConstruct {
             actions: [
                 "dynamodb:Scan",
                 "dynamodb:PutItem",
+            ]
+        }));
+
+        return role;
+    }
+
+    private createExecutionRole(baseName: string): iam.Role {
+        const role = new iam.Role(this, `ExecutionRole`, {
+            roleName: `${baseName}ExecutionRole`,
+            assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com')
+        });
+
+        role.addToPolicy(new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            resources: ['*'],
+            actions: [
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage"
+            ]
+        }));
+        role.addToPolicy(new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            resources: ['*'],
+            actions: [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
             ]
         }));
 

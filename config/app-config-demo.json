@@ -2,8 +2,7 @@
     "Project": {
         "Name": "EcsProject",
         "Stage": "Demo",
-        "Account": "751571716296",
-        "Account2": "75157*******",
+        "Account": "75157*******",
         "Region": "us-east-2",
         "Profile": "cdk-demo"
     },
@@ -22,6 +21,8 @@
         "SampleBackendFastapi": {
             "Name": "SampleBackendFastapiStack",
             "InfraVersion": "'1.0.0'",
+            "DockerImageType": "HUB",
+            "DockerImageType-Desc": "HUB or ECR or LOCAL",
             
             "PortNumber": 80,
             "InternetFacing": false,
@@ -44,6 +45,8 @@
         "SampleFrontendFlask": {
             "Name": "SampleFrontendFlaskStack",
             "InfraVersion": "'1.0.0'",
+            "DockerImageType": "HUB",
+            "DockerImageType-Desc": "HUB or ECR or LOCAL",
             
             "PortNumber": 80,
             "InternetFacing": true,

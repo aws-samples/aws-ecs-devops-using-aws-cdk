@@ -11,7 +11,7 @@ import * as base from '../../../lib/template/construct/base/base-construct'
 
 const REFRESH_PERIOD_IN_MIN: number = 1;
 
-export interface EcsAlbMonitorProps extends base.ConstructProps {
+export interface EcsMonitorProps extends base.ConstructProps {
     stackName: string;
     alb: lb2.ApplicationLoadBalancer;
     ecsSrevice: ecs.FargateService;
@@ -22,9 +22,9 @@ export interface EcsAlbMonitorProps extends base.ConstructProps {
 
 export class EcsAlbMonitorConstrunct extends base.BaseConstruct {
     private dashboard: cloudwatch.Dashboard;
-    private props: EcsAlbMonitorProps;
+    private props: EcsMonitorProps;
     
-    constructor(scope: cdk.Construct, id: string, props: EcsAlbMonitorProps) {
+    constructor(scope: cdk.Construct, id: string, props: EcsMonitorProps) {
         super(scope, id, props);
 
         this.props = props;

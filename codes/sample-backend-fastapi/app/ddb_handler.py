@@ -26,3 +26,13 @@ class DDBHandler(object):
         except ClientError as e:
             print('[ERROR] get_items_count', e)
             return None
+
+
+    def put_item(self, item: dict):
+        try:
+            response = self.table.put_item(Item=item)
+            print('[SUCCESS] put_item: response', response)
+        except ClientError as e:
+            print('[ERROR] put_item', e)
+            return False
+        return True

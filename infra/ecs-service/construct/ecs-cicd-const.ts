@@ -6,62 +6,52 @@ import * as ecr from '@aws-cdk/aws-ecr';
 import * as codecommit from '@aws-cdk/aws-codecommit';
 import * as codebuild from '@aws-cdk/aws-codebuild';
 import * as codepipeline from '@aws-cdk/aws-codepipeline';
-import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions';
+import * as actions from '@aws-cdk/aws-codepipeline-actions';
 
 import * as base from '../../../lib/template/construct/base/base-construct'
 
 
-export interface EcsAlbCicdProps extends base.ConstructProps {
+export interface EcsCicdProps extends base.ConstructProps {
     vpc: ec2.IVpc;
     cluster: ecs.ICluster;
     stackName: string;
     service: ecs.IBaseService;
     appPath: string;
     containerName: string;
+    repo: codecommit.Repository;
+    ecrRepo: ecr.Repository;
 }
 
-export class EcsAlbCicdConstrunct extends base.BaseConstruct {
+export class EcsCicdConstrunct extends base.BaseConstruct {
 
-    constructor(scope: cdk.Construct, id: string, props: EcsAlbCicdProps) {
+    constructor(scope: cdk.Construct, id: string, props: EcsCicdProps) {
         super(scope, id, props);
 
-        const repoName = 'repo';
-
-        const repo = new codecommit.Repository(this, `${props.stackName}Repository`, {
-            repositoryName: `${props.stackName}-${repoName}`.toLowerCase(),
-            description: props.stackName,
-        });
-        new cdk.CfnOutput(this, 'CodeCommit Name', { value: repo.repositoryName });
-
-        const ecrRepo = new ecr.Repository(this, `${props.stackName}EcrRepository`, {
-            repositoryName: `${props.stackName}-${repoName}`.toLowerCase()
-        });
-
         const sourceOutput = new codepipeline.Artifact();
-        const buildOutput = new codepipeline.Artifact();
-
-        const sourceAction = new codepipeline_actions.CodeCommitSourceAction({
+        const sourceAction = new actions.CodeCommitSourceAction({
             actionName: 'CodeCommit_SourceMerge',
-            repository: repo,
+            repository: props.repo,
             output: sourceOutput,
             branch: 'master'
         })
-
-        const buildAction = new codepipeline_actions.CodeBuildAction({
+        
+        const buildOutput = new codepipeline.Artifact();
+        const buildAction = new actions.CodeBuildAction({
             actionName: 'CodeBuild_DockerBuild',
-            project: this.createBuildProject(ecrRepo, props),
+            project: this.createBuildProject(props.ecrRepo, props),
             input: sourceOutput,
             outputs: [buildOutput],
         });
 
-        const approvalAction = new codepipeline_actions.ManualApprovalAction({
+        const approvalAction = new actions.ManualApprovalAction({
             actionName: 'Manual_Approve',
         });
 
-        const deployAction = new codepipeline_actions.EcsDeployAction({
-            actionName: 'ECS_Deploy',
+        const deployAction = new actions.EcsDeployAction({
+            actionName: 'ECS_ContainerDeploy',
             service: props.service,
-            imageFile: new codepipeline.ArtifactPath(buildOutput, `imagedefinitions.json`)
+            imageFile: new codepipeline.ArtifactPath(buildOutput, `imagedefinitions.json`),
+            deploymentTimeout: cdk.Duration.minutes(30)
         });
 
         new codepipeline.Pipeline(this, 'ECSServicePipeline', {
@@ -87,7 +77,7 @@ export class EcsAlbCicdConstrunct extends base.BaseConstruct {
         });
     }
 
-    private createBuildProject(ecrRepo: ecr.Repository, props: EcsAlbCicdProps): codebuild.Project {
+    private createBuildProject(ecrRepo: ecr.Repository, props: EcsCicdProps): codebuild.Project {
         const project = new codebuild.Project(this, 'DockerBuild', {
             projectName: `${props.stackName}DockerBuild`,
             environment: {
@@ -118,13 +108,15 @@ export class EcsAlbCicdConstrunct extends base.BaseConstruct {
                     pre_build: {
                         commands: [
                             'echo "In Pre-Build Phase"',
-                            'export TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION}'
+                            'export TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION}',
+                            'echo $TAG'
                         ]
                     },
                     build: {
                         commands: [
                             'echo "In Build Phase"',
                             'cd $APP_PATH',
+                            'ls -l',
                             `docker build -t $ECR_REPO_URI:$TAG .`,
                             '$(aws ecr get-login --no-include-email)',
                             'docker push $ECR_REPO_URI:$TAG'
@@ -133,6 +125,7 @@ export class EcsAlbCicdConstrunct extends base.BaseConstruct {
                     post_build: {
                         commands: [
                             'echo "In Post-Build Phase"',
+                            'pwd',
                             'cd $BACK_PATH',
                             "printf '[{\"name\":\"%s\",\"imageUri\":\"%s\"}]' $CONTAINER_NAME $ECR_REPO_URI:$TAG > imagedefinitions.json",
                             "pwd; ls -al; cat imagedefinitions.json"
@@ -157,7 +150,7 @@ export class EcsAlbCicdConstrunct extends base.BaseConstruct {
                 "ecr:BatchGetImage",
                 "ecr:GetDownloadUrlForLayer"
             ],
-            resources: [`${props.cluster.clusterArn}`],
+            resources: [props.cluster.clusterArn],
         }));
 
         return project;
