@@ -51,8 +51,6 @@
             "PortNumber": 80,
             "InternetFacing": true,
 
-            "TargetStack": "SampleBackendFastapi",
-            
             "AppPath": "codes/sample-frontend-flask",
             "DesiredTasks": 1,
             "Cpu": 1024,

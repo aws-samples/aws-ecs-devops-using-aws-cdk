@@ -36,8 +36,6 @@ def hello():
     python_version = platform.python_version()
     now = datetime.datetime.now()
 
-    log_to_backend()
-
     return flask.render_template('index.html',
                                  name=app_name,
                                  platform=container_service,
