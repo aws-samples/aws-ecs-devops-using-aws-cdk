@@ -32,6 +32,7 @@ export class EcsAlbServiceStack extends base.BaseStack {
             dockerImageType: this.stackConfig.DockerImageType,
             vpc: vpc,
             cluster: ecsCluster,
+            ecrRepo: repo.ecrRepo,
             internetFacing: this.stackConfig.InternetFacing,
             containerPort: this.stackConfig.PortNumber,
             dockerPath: this.stackConfig.AppPath,

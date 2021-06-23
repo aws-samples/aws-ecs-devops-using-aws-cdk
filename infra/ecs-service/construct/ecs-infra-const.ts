@@ -15,7 +15,7 @@ export interface EcsInfraProps extends base.ConstructProps  {
     vpc: ec2.IVpc;
     cluster: ecs.ICluster;
     dockerImageType: string;
-    ecrRepo?: ecr.Repository;
+    ecrRepo: ecr.Repository;
     containerPort: number;
     internetFacing: boolean;
     dockerPath: string;
@@ -113,7 +113,7 @@ export class EcsInfraConstrunct extends base.BaseConstruct {
         if (props.dockerImageType == 'HUB') {
             return ecs.ContainerImage.fromRegistry("amazon/amazon-ecs-sample");
         } else if (props.dockerImageType == 'ECR') {
-            return ecs.ContainerImage.fromEcrRepository(props.ecrRepo!);
+            return ecs.ContainerImage.fromEcrRepository(props.ecrRepo);
         } else {
             return ecs.ContainerImage.fromAsset(props.dockerPath);
         }

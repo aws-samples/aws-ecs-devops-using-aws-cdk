@@ -51,7 +51,7 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
             actionName: 'ECS_ContainerDeploy',
             service: props.service,
             imageFile: new codepipeline.ArtifactPath(buildOutput, `imagedefinitions.json`),
-            deploymentTimeout: cdk.Duration.minutes(30)
+            deploymentTimeout: cdk.Duration.minutes(60)
         });
 
         new codepipeline.Pipeline(this, 'ECSServicePipeline', {
@@ -108,7 +108,7 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
                     pre_build: {
                         commands: [
                             'echo "In Pre-Build Phase"',
-                            'export TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION}',
+                            'export TAG=latest',
                             'echo $TAG'
                         ]
                     },
