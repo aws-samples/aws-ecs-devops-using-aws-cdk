@@ -2,7 +2,7 @@ import flask
 import datetime
 import platform
 import os
-# import requests
+import requests
 
 import sys
 import logging
@@ -16,6 +16,15 @@ logger.addHandler(log_handler)
 app = flask.Flask(__name__)
 _port = int(os.environ.get('PORT_IN', '80'))
 
+_namespace = os.environ.get('Namespace', '')
+_target = os.environ.get('TargetServiceName', '')
+
+
+def log_to_backend():
+    if len(_target) > 0 and len(_namespace) > 0:
+        url = 'http://{}.{}/logging'.format(_target, _namespace)
+        response = requests.get(url, timeout=60)
+
 
 @app.route('/')
 def hello():
@@ -27,9 +36,7 @@ def hello():
     python_version = platform.python_version()
     now = datetime.datetime.now()
 
-    # url = 'http://{}.{}/'.format('EcsProjectDemo-EcsAlbStack', 'EcsProjectDemo-NS')
-    # body = requests.get(url, timeout=1).text
-    # print('===body', body)
+    log_to_backend()
 
     return flask.render_template('index.html',
                                  name=app_name,
