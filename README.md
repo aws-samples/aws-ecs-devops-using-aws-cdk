@@ -2,11 +2,9 @@
 
 This repository provides a general DevOps practices such MSA, IaC, CICD and Monitoring. AWS various services are used to provide DevOps best practices. All necessary cloud resources are modeled and deployed through AWS CDK.
 
-Other "Using AWS CDK" series can be found at:
+금일 실습 가이드는 다음 위치에 pdf 파일로 제공됩니다.
 
-- [Amazon Sagemaker Model Serving Using AWS CDK](https://github.com/aws-samples/amazon-sagemaker-model-serving-using-aws-cdk)
-- [AWS IoT Greengrass Ver2 using AWS CDK](https://github.com/aws-samples/aws-iot-greengrass-v2-using-aws-cdk)
-- [AWS Serverless Using AWS CDK](https://github.com/aws-samples/aws-serverless-using-aws-cdk)
+- ```docs/pdf/AWS-Builders-AWS-CDK-HoL-samples.pdf```
 
 ## Solution Architecture
 
