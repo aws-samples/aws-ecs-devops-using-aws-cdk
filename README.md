@@ -14,6 +14,7 @@ Other "Using AWS CDK" series can be found at:
 - ***Programming-based IaC***: all cloud resources are modeld and provisioned using AWS CDK(Typescript)
 - ***Fully managed CICD***: Continuous integration and continuous deploy using AWS Code Series(Pipeline/Commit/Build/Deploy)
 - ***Fully managed Monitoring***: logging, metric, dashboard using Amazon CloudWatch
+- ***Service Discovery***: private DNS service registration & discovery using AWS Cloud Map
 
 ![solution-arcitecture](docs/asset/solution-architecture.png)
 
@@ -23,7 +24,7 @@ To efficiently define and provision aws cloud resources, [AWS Cloud Development 
 
 ![AWSCDKIntro](docs/asset/aws_cdk_intro.png)
 
-Because this solusion is implemented in CDK, we can deploy these cloud resources using CDK CLI. Among the various languages supported, this solution used typescript. Because the types of **typescript** are very strict, with the help of auto-completion, typescrip offers a very nice combination with AWS CDK.
+Because this solusion is implemented in CDK, we can deploy these cloud resources using CDK CLI. Among the various languages supported, this solution used **typescript**. Because the types of **typescript** are very strict, with the help of auto-completion, **typescript** offers a very nice combination with AWS CDK.
 
 ***Caution***: This solution contains not-free tier AWS services. So be careful about the possible costs.
 
@@ -63,7 +64,7 @@ The `cdk.json` file tells CDK Toolkit how to execute your app.
 
 ### ***Set up deploy config***
 
-The `config/app-config-demo.json` files tell how to configure deploy condition & stack condition. First of all, change project configurations(Account, Profile are essential) in ```config/app-config-demo.json```.
+The `config/app-config-demo.json` file describes how to configure deploy condition & stack condition. First of all, change project configurations(Account, Profile are essential) in ```config/app-config-demo.json```.
 
 ```json
 {
@@ -88,7 +89,7 @@ export APP_CONFIG=config/app-config-demo.json
 ### ***Install dependecies & Bootstrap***
 
 ```bash
-sh ./script/setup_initial.sh config/app-config-demo.json
+sh scripts/setup_initial.sh config/app-config-demo.json
 ```
 
 ### ***Deploy stacks***
@@ -100,7 +101,9 @@ cdk list
 ...
 ...
 ==> CDK App-Config File is config/app-config-demo.json, which is from Environment-Variable.
-EcsProjectDemo-EcsAlbStack
+EcsProjectDemo-LoadTesterScriptStack
+EcsProjectDemo-SampleBackendFastapiStack
+EcsProjectDemo-SampleFrontendFlaskStack
 EcsProjectDemo-VpcInfraStack
 ...
 ...
@@ -111,13 +114,13 @@ Check if you can see the list of stacks as shown above.
 If there is no problem, finally run the following command.
 
 ```bash
-sh ./script/deploy_stacks.sh config/app-config-demo.json
+sh scripts/deploy_stacks.sh config/app-config-demo.json
 ```
 
 You can find the deployment results in AWS CloudFormation as shown in the following picture.
 ![cloudformation-stacks](docs/asset/cloudformation-stacks.png)
 
-Open a web-browser and enter LoadBalancer's domain name(which is the output of ```sh script/deploy_stacks```) to see the following screen.
+Open a web-browser and enter LoadBalancer's domain name(which is the output of ```sh scripts/deploy_stacks```) to see the following screen. or You can find that in AWS CloudFormation.
 
 ```bash
 ...
@@ -129,12 +132,23 @@ EcsProjectDemo-EcsAlbStack.EcsAlbInfraConstrunctServiceServiceURL290953F6 = http
 ...
 ```
 
+![frontend-alb-dns](docs/asset/frontend-alb-dns.png)
+
+The initial web page is a php sample screen(in public DockerHub) as we haven't uploaded the source code yet.
 ![initial-web-page](docs/asset/initial-web-page.png)
-The initial screen is a php sample screen(in public DockerHub) as we haven't uploaded the source code yet.
+
+These stacks finally deploy the following resources.
+
+ - EcsProjectDemo-VpcInfraStack: VPC, ECS Cluster, Cloud Map Namespace
+ - EcsProjectDemo-SampleBackendFastapiStack: CodeCommit, ECR, ECS Service/Task, Dashboard, CICD Pipeline for **sample-backend-fastapi**
+ - EcsProjectDemo-SampleFrontendFlaskStack: CodeCommit, ECR, ECS Service/Task, Dashboard, CICD Pipeline for **sample-frontend-flask**
+ - EcsProjectDemo-LoadTesterScriptStack: ECS Service/Task for **load-tester-script**
+
+![stack-pipeline](docs/asset/stack-pipeline.png)
 
 ## How to update logic
 
-AWS CDK made CodeCommit(git) repository for you. Please visit CodeCommit in AWS management web console, note remote address of that.
+AWS CDK created CodeCommit(source repoistory)/ECR(docker repository) repository for you. Please visit CodeCommit in AWS management web console, note remote address of that.
 ![codecommit-repo](docs/asset/codecommit-repo.png)
 
 Finally add git remote address in your development environment. Thease codes are sample for you.
