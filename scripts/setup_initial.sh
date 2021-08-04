@@ -29,8 +29,11 @@ echo .
 echo .
 
 echo ==--------BootstrapCDKEnvironment---------==
-cdk bootstrap aws://$ACCOUNT/$REGION --profile $PROFILE_NAME
-# cdk bootstrap aws://$ACCOUNT/$REGION
+if [ -z "$PROFILE_NAME" ]; then
+    cdk bootstrap aws://$ACCOUNT/$REGION
+else
+    cdk bootstrap aws://$ACCOUNT/$REGION --profile $PROFILE_NAME
+fi
 echo .
 echo .
 

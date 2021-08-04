@@ -17,9 +17,16 @@ echo .
 echo .
 
 echo ==--------DestroyStacksStepByStep---------==
-cdk destroy *-LoadTesterScriptStack --force --profile $PROFILE_NAME
-cdk destroy *-SampleFrontendFlaskStack --force --profile $PROFILE_NAME
-cdk destroy *-SampleBackendFastapiStack --force --profile $PROFILE_NAME
-cdk destroy *-VpcInfraStack --force --profile $PROFILE_NAME
+if [ -z "$PROFILE_NAME" ]; then
+    cdk destroy *-LoadTesterScriptStack --force
+    cdk destroy *-SampleFrontendFlaskStack --force
+    cdk destroy *-SampleBackendFastapiStack --force
+    cdk destroy *-VpcInfraStack --force
+else
+    cdk destroy *-LoadTesterScriptStack --force --profile $PROFILE_NAME
+    cdk destroy *-SampleFrontendFlaskStack --force --profile $PROFILE_NAME
+    cdk destroy *-SampleBackendFastapiStack --force --profile $PROFILE_NAME
+    cdk destroy *-VpcInfraStack --force --profile $PROFILE_NAME
+fi
 echo .
 echo .

@@ -25,9 +25,16 @@ echo .
 echo .
 
 echo ==--------DeployStacksStepByStep---------==
-cdk deploy *-VpcInfraStack --require-approval never --profile $PROFILE_NAME
-cdk deploy *-SampleBackendFastapiStack --require-approval never --profile $PROFILE_NAME
-cdk deploy *-SampleFrontendFlaskStack --require-approval never --profile $PROFILE_NAME
-cdk deploy *-LoadTesterScriptStack --require-approval never --profile $PROFILE_NAME
+if [ -z "$PROFILE_NAME" ]; then
+    cdk deploy *-VpcInfraStack --require-approval never
+    cdk deploy *-SampleBackendFastapiStack --require-approval never
+    cdk deploy *-SampleFrontendFlaskStack --require-approval never
+    cdk deploy *-LoadTesterScriptStack --require-approval never
+else
+    cdk deploy *-VpcInfraStack --require-approval never --profile $PROFILE_NAME
+    cdk deploy *-SampleBackendFastapiStack --require-approval never --profile $PROFILE_NAME
+    cdk deploy *-SampleFrontendFlaskStack --require-approval never --profile $PROFILE_NAME
+    cdk deploy *-LoadTesterScriptStack --require-approval never --profile $PROFILE_NAME
+fi
 echo .
 echo .

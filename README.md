@@ -2,7 +2,9 @@
 
 This repository provides a general DevOps practices such MSA, IaC, CICD and Monitoring. AWS various services are used to provide DevOps best practices. All necessary cloud resources are modeled and deployed through AWS CDK.
 
-금일 실습 가이드는 다음 위치에 pdf 파일로 제공됩니다.
+Korean Hands on Lab: [AWS-Builders-AWS-CDK-HoL-samples.pdf](https://github.com/aws-samples/aws-ecs-devops-using-aws-cdk/blob/hol_20210624/docs/pdf/AWS-Builders-AWS-CDK-HoL-samples.pdf)
+
+Other "Using AWS CDK" series can be found at:
 
 - ```docs/pdf/AWS-Builders-AWS-CDK-HoL-samples.pdf```
 
