@@ -2,13 +2,33 @@
 
 This repository provides a general DevOps practices such MSA, IaC, CICD and Monitoring. AWS various services are used to provide DevOps best practices. All necessary cloud resources are modeled and deployed through AWS CDK.
 
-Korean Hands on Lab: [AWS-Builders-AWS-CDK-HoL-samples.pdf](https://github.com/aws-samples/aws-ecs-devops-using-aws-cdk/blob/hol_20210624/docs/pdf/AWS-Builders-AWS-CDK-HoL-samples.pdf)
+Korean `Hands on Lab` Guide: [AWS-Builders-AWS-CDK-HoL-samples.pdf](https://github.com/aws-samples/aws-ecs-devops-using-aws-cdk/blob/hol_20210624/docs/pdf/AWS-Builders-AWS-CDK-HoL-samples.pdf)
 
 Other "Using AWS CDK" series can be found at:
 
-- [Amazon Sagemaker Model Serving Using AWS CDK](https://github.com/aws-samples/amazon-sagemaker-model-serving-using-aws-cdk)
-- [AWS IoT Greengrass Ver2 using AWS CDK](https://github.com/aws-samples/aws-iot-greengrass-v2-using-aws-cdk)
 - [AWS Serverless Using AWS CDK](https://github.com/aws-samples/aws-serverless-using-aws-cdk)
+- [Amazon SageMaker Model Serving Using AWS CDK](https://github.com/aws-samples/amazon-sagemaker-model-serving-using-aws-cdk)
+- [AWS IoT Greengrass Ver2 using AWS CDK](https://github.com/aws-samples/aws-iot-greengrass-v2-using-aws-cdk)
+- [Amazon SageMaker Built-in Algorithms MLOps Pipeline Using AWS CDK](https://github.com/aws-samples/amazon-sagemaker-built-in-algorithms-mlops-pipeline-using-aws-cdk)
+
+## Solution Key Concept
+
+ `DevOps` encourages various practices to increase development productivity and speed deployment. Representative practies are:
+
+- MSA(Micro-service Architecture) as a architecture style
+- IaC(Infrastructure as Code) as a way to deal with infrastructure
+- CICD Pipeline(Continuous Integration Continuous Deploy) as a SCM & deployment automation
+- Dashboard as a status/usage monitoring
+
+A small number of DevOps team(engineers) should be able to provide the following environments(tool/service/infra) easily and quickly and scalably to each service team. At the same time, they must have ownership of the common areas and resources of each service. Conversely, service team(developers) should be able to focus on developing business logic.
+
+After they(DevOps engineer & Service developer) hold a new service development meeting, DevOps team configures the entire environment(tool/service/infra) and delivers the service development project's Git repository to the service development team, where the service development team develops business logic. Ultimately, they tune cloud resources through monitoring together.
+
+![devops-rnr](docs/asset/devops-rnr.png)
+
+These are the essential elements that each micro-service development team must have for MSA. This repository abstracts these functions through programmable CDK and provides them through CloudFormation/CDK `Stack`. In other words, CDK serves as a tool to make the most of these best practices.
+
+![msa-essential-elements](docs/asset/msa-essential-elements.png)
 
 ## Solution Architecture
 
@@ -22,13 +42,19 @@ Other "Using AWS CDK" series can be found at:
 
 ## CDK-Project Build & Deploy
 
-To efficiently define and provision aws cloud resources, [AWS Cloud Development Kit(CDK)](https://aws.amazon.com/cdk) which is an open source software development framework to define your cloud application resources using familiar programming languages is utilized.
+To efficiently define and provision AWS cloud resources, [AWS Cloud Development Kit(CDK)](https://aws.amazon.com/cdk) which is an open source software development framework to define your cloud application resources using familiar programming languages is utilized.
 
 ![AWSCDKIntro](docs/asset/aws_cdk_intro.png)
 
 Because this solusion is implemented in CDK, we can deploy these cloud resources using CDK CLI. Among the various languages supported, this solution used **typescript**. Because the types of **typescript** are very strict, with the help of auto-completion, **typescript** offers a very nice combination with AWS CDK.
 
-***Caution***: This solution contains not-free tier AWS services. So be careful about the possible costs.
+### ***CDK Useful commands***
+
+- `npm install`     install dependencies
+- `cdk list`        list up stacks
+- `cdk deploy`      deploy this stack to your default AWS account/region
+- `cdk diff`        compare deployed stack with current state
+- `cdk synth`       emits the synthesized CloudFormation template
 
 ### **Prerequisites**
 
@@ -43,13 +69,21 @@ Please refer to the kind guide in [CDK Workshop](https://cdkworkshop.com/15-prer
 
 ### ***Configure AWS Credential***
 
+Please configure your AWS credential to grant AWS roles to your develop PC. 
+
 ```bash
 aws configure --profile [your-profile] 
 AWS Access Key ID [None]: xxxxxx
 AWS Secret Access Key [None]:yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
 Default region name [None]: us-east-2 
 Default output format [None]: json
-    
+...
+...
+```
+
+If you don't know your AWS account information, execute the following commad:
+
+```bash
 aws sts get-caller-identity --profile [your-profile]
 ...
 ...
@@ -60,9 +94,9 @@ aws sts get-caller-identity --profile [your-profile]
 }
 ```
 
-### ***Check cdk project's default launch config***
+### ***Check CDK project's launch config***
 
-The `cdk.json` file tells CDK Toolkit how to execute your app.
+The `cdk.json` file tells CDK Toolkit how to execute your app. Our current entry point for our project is `infra/app-main.ts`.
 
 ### ***Set up deploy config***
 
@@ -88,7 +122,7 @@ And then set the path of the configuration file through an environment variable.
 export APP_CONFIG=config/app-config-demo.json
 ```
 
-### ***Install dependecies & Bootstrap***
+### ***Install dependecies & bootstrap***
 
 ```bash
 sh scripts/setup_initial.sh config/app-config-demo.json
@@ -96,7 +130,84 @@ sh scripts/setup_initial.sh config/app-config-demo.json
 
 ### ***Deploy stacks***
 
-Before deployment, check whether all configurations are ready. Please execute the following command.
+This project has 4 stacks, each of which does the following:
+
+- EcsProjectDemo-VpcInfraStack: VPC, ECS Cluster, CloudMap Namespace for a base infrastructure
+- EcsProjectDemo-SampleBackendFastapiStack: Private ALB, ECS Service/Task, ECR/CodeCommit, DDB Table, CodePipeline/Build, CloudWatch Dashboard for Backend
+- EcsProjectDemo-SampleFrontendFlaskStack: Public ALB, ECS Service/Task, ECR/CodeCommit, DDB Table, CodePipeline/Build, CloudWatch Dashboard for Frontend
+- EcsProjectDemo-LoadTesterScriptStack: ECS Service/Task for internal-testing
+
+![stack-dependency](docs/asset/stack-dependency.png)
+
+`config/app-config-demo.json` file describes how to configure each stack. For example `backend`'s configuration is like this.
+
+```json
+...
+...
+"SampleBackendFastapi": {
+    "Name": "SampleBackendFastapiStack",
+    "InfraVersion": "'1.0.0'",
+    "DockerImageType": "HUB",
+    "DockerImageType-Desc": "HUB or ECR or LOCAL",
+    
+    "PortNumber": 80,
+    "InternetFacing": false,
+    
+    "AppPath": "codes/sample-backend-fastapi",
+    "DesiredTasks": 1,
+    "Cpu": 1024,
+    "Memory": 2048,
+
+    "AutoScalingEnable": false,
+    "AutoScalingMinCapacity": 1,
+    "AutoScalingMaxCapacity": 2,
+    "AutoScalingTargetInvocation": 50,
+
+    "TableName": "LogTable",
+
+    "AlarmThreshold": 200,
+    "SubscriptionEmails": ["kwonyul@amazon.com"]
+},
+...
+...
+```
+
+And `frontend`'s configuration is like this.
+
+```json
+...
+...
+"SampleFrontendFlask": {
+    "Name": "SampleFrontendFlaskStack",
+    "InfraVersion": "'1.0.0'",
+    "DockerImageType": "HUB",
+    "DockerImageType-Desc": "HUB or ECR or LOCAL",
+    
+    "PortNumber": 80,
+    "InternetFacing": true,
+
+    "TargetStack": "SampleBackendFastapi",
+    
+    "AppPath": "codes/sample-frontend-flask",
+    "DesiredTasks": 1,
+    "Cpu": 1024,
+    "Memory": 2048,
+
+    "AutoScalingEnable": false,
+    "AutoScalingMinCapacity": 1,
+    "AutoScalingMaxCapacity": 2,
+    "AutoScalingTargetInvocation": 50,
+
+    "AlarmThreshold": 200,
+    "SubscriptionEmails": ["kwonyul@amazon.com"]
+},
+...
+...
+```
+
+This repository uses python-based containers for convenience only, but you can replace python-based sample stacks with your own container-based stacks later.
+
+Before deployment, check whether all configurations are ready. Please execute the following command:
 
 ```bash
 cdk list
@@ -111,18 +222,26 @@ EcsProjectDemo-VpcInfraStack
 ...
 ```
 
-Check if you can see the list of stacks as shown above.
+Check if you can see a list of stacks as shown above.
 
-If there is no problem, finally run the following command.
+If there is no problem, finally run the following command:
 
 ```bash
 sh scripts/deploy_stacks.sh config/app-config-demo.json
 ```
 
-You can find the deployment results in AWS CloudFormation as shown in the following picture.
+***Caution***: This solution contains not-free tier AWS services. So be careful about the possible costs.
+
+It is typically DevOps engineer's job to deploy these stacks. After deploying these stacks, DevOps engineers need to pass the repository address(CodeCommit name/address) so that service developers can develop their logic in their repository.
+
+Now you can find deployment results in AWS CloudFormation as shown in the following picture.
 ![cloudformation-stacks](docs/asset/cloudformation-stacks.png)
 
-Open a web-browser and enter LoadBalancer's domain name(which is the output of ```sh scripts/deploy_stacks```) to see the following screen. or You can find that in AWS CloudFormation.
+## How to test
+
+### ***Frontend Test***
+
+Because frontend is provided through public ALB(LoadBalancer's domain name is the output of ```sh scripts/deploy_stacks```), we can connect frontend using web browser.
 
 ```bash
 ...
@@ -136,79 +255,152 @@ EcsProjectDemo-EcsAlbStack.EcsAlbInfraConstrunctServiceServiceURL290953F6 = http
 
 ![frontend-alb-dns](docs/asset/frontend-alb-dns.png)
 
-The initial web page is a php sample screen(in public DockerHub) as we haven't uploaded the source code yet.
+The initial web page is a php sample screen(in public DockerHub) as frontend service team haven't uploaded their source code yet.
 ![initial-web-page](docs/asset/initial-web-page.png)
 
-These stacks finally deploy the following resources.
+And CloudWatch's dashboard provides the current monitoring status like this.
+![frontend-dashboard](docs/asset/frontend-dashboard.png)
 
- - EcsProjectDemo-VpcInfraStack: VPC, ECS Cluster, Cloud Map Namespace
- - EcsProjectDemo-SampleBackendFastapiStack: CodeCommit, ECR, ECS Service/Task, Dashboard, CICD Pipeline for **sample-backend-fastapi**
- - EcsProjectDemo-SampleFrontendFlaskStack: CodeCommit, ECR, ECS Service/Task, Dashboard, CICD Pipeline for **sample-frontend-flask**
- - EcsProjectDemo-LoadTesterScriptStack: ECS Service/Task for **load-tester-script**
+### ***Backend Test***
 
-![stack-pipeline](docs/asset/stack-pipeline.png)
-
-## How to update logic
-
-AWS CDK created CodeCommit(source repoistory)/ECR(docker repository) repository for you. Please visit CodeCommit in AWS management web console, note remote address of that.
-![codecommit-repo](docs/asset/codecommit-repo.png)
-
-Finally add git remote address in your development environment. Thease codes are sample for you.
+Because backend is provided through private ALB, we can not use web browser. `LoadTesterScriptStack` was provided for testing that internally in VPC, which is sending a lot of requests within the same VPC. `codes/load-tester-script/app/entrypoint.sh` file describes how to work in docker container, where two types of URL(URL_
+ALB, URL_NAMESPACE) are utilized like this.
 
 ```bash
-git remote -v
-git remote add [your-new-remote-origin-name] [your-codecommit-address]
+#!/bin/sh
+
+echo --TARGET-URL--
+export URL_ALB=http://$AlbDnsName/items
+export URL_NAMESPACE=http://$TargetServiceName.$Namespace/items
+echo $URL
+
+echo --RESPONSE-TEST--
+curl $URL_ALB
+
+function ab_function {
+    ab -n 50 -c 2 $URL_ALB
+    ab -n 50 -c 2 $URL_NAMESPACE
+
+}
+
+echo --START-LOAD-TEST--
+while true; do ab_function; sleep 5; done
+# while true; do ab -n 50 -c 2 $URL; sleep 5; done
 ```
 
-After modifying logic codes(in this repository, logic codes are in ```codes/sample-flask-web```), push only that to AWS CodeCommit. Please commit this directory only, because each micro-servie has its own repository. This will trigger AWS CodePipeline and automatically re-deploy the new container image to AWS ECS Service/Task. You have to click ```Review``` button in Approve stage.
+And CloudWatch's dashboard provides the current monitoring status like this.
+![backend-dashboard](docs/asset/backend-dashboard.png)
 
-![code-pipeline](docs/asset/code-pipeline.png)
+***Caution***: Because the current DDB table's capacity is very low, `RequestCount` is also low. The answer to this can be found through below graph. That is, DDB table's throttle metric continued to occur and the backend could not respond quickly, resulting in low TPS.
 
-![code-pipeline](docs/asset/ecs-deployment.png)
+![backend-throttle](docs/asset/backend-throttle.png)
 
-***Caution***:  If you have modified this path( ```codes/sample-flask-web```), please reflect the changed path in ```config/app-config-demo.son``` file.
+## How to update frontend/backend
 
-```json
-...
-...
-    "EcsAlb": {
-        "Name": "EcsAlbStack",
+### ***DevOps Team(Engineers)***
 
-        "InfraVersion": "'1.0.0'",
+ DevOps team(engineers) created CodeCommit(source repoistory)/ECR(docker repository) repository throught AWS CDK's stacks. Please visit CodeCommit in AWS management web console, note the repository address in CodeCommit and share it with backend developers and frontend developers.
+![codecommit-repo](docs/asset/codecommit-repo.png)
 
-        "PortNumber": 80,
-        "AppPath": "codes/sample-flask-web", <------ Here
+### ***Service Team(Developers)***
 
-        "RepoName": "sample-flask-web",
+ When frontend/backend service team(developers) receives the Git address, they clone each address and start developing the project. When each developer commit and puth to Git, CICD pipeline is triggered.
 
-        "DashboardName": "SampleFlaskWeb"
-    },
-...
-...
-```
+For example, backend service developer's project looks like this, where `code/sample-backend-fastapi` path must match `AppPath` in `app-config-demo.json`.
+
+![backend-project](docs/asset/backend-project.png)
+
+For example, frontend service developer's project looks like this, where `code/sample-frontend-flaskweb` path must match `AppPath` in `app-config-demo.json`.
+
+![frontend-project](docs/asset/frontend-project.png)
+
+For convenience, I have prepared sample codes in `codes/sample-backend-fastapi` and `codes/sample-frontend-flask` path, but actually these codes should be managed in separate repositories.
+
+Once CodePipeline starts, this builds each docker image, and push it to ECR, and wait for `Review` button to be clicked on `ECS Deployments`.
+
+CodePipeline is in `In Process`.
+![code-pipeline-inprogress](docs/asset/code-pipeline-inprogress.png)
+
+CodePipeline is waiting for `Review` button to be clicked.
+![code-pipeline-review](docs/asset/code-pipeline-review.png)
 
 After provisioning, you can check the updated web page like the following screen.
 ![new-web-page](docs/asset/new-web-page.png)
 
-Also you can check a realtime dashboard of cloud resources in Amazon CloudWatch Dashboard.
+## How to update infrastructure
 
-![dashboard-one](docs/asset/dashboard-one.png)
+After the business logic of each service is deployed through ECR, each stack's configuration must be changed so that the infrastructure deployment also refers to ECR.
+
+Just change `DockerImageType` from `HUB` to `ECR` in each stack configuration below.
+
+```json
+"SampleBackendFastapi": {
+    "Name": "SampleBackendFastapiStack",
+    ...
+    ...
+    "DockerImageType": "HUB", <----- ECR
+    "DockerImageType-Desc": "HUB or ECR or LOCAL",
+    ...
+    ...
+},
+```
 
 ## How to add a new service
 
-Just add a new stack configuration in ```config/app-config-demo.json```.
+Just add a new stack configuration in ```config/app-config-demo.json```. And then instantiate `EcsAlbServiceStack` in `infra/app-main.ts` with the new stack configuration.
 
-And then instantiate ```Class``` like the following codes. 
+For example, if your new stack is named `UserBackendSpringStack`, you can work in pairs like this:
 
-Since AWS CDK(Typescript, Java, Python, ...) supports object-oriented programming language, you can create a new resource simply by instantiating the object without copying the code. This is one of the great advantages of AWS CDK.
+### ***configuration in `config/app-config-demo.json`***
 
-## CDK Useful commands
+```json
+...
+...
+"UserBackendSpring": {
+    "Name": "UserBackendSpringStack",
+    "InfraVersion": "'1.0.0'",
+    "DockerImageType": "HUB",
+    "DockerImageType-Desc": "HUB or ECR or LOCAL",
+    
+    "PortNumber": 80,
+    "InternetFacing": false,
+    
+    "AppPath": "codes/user-backend-spring",
+    "DesiredTasks": 1,
+    "Cpu": 1024,
+    "Memory": 2048,
 
-* `npm install`     install dependencies
-* `cdk list`        list up stacks
-* `cdk deploy`      deploy this stack to your default AWS account/region
-* `cdk diff`        compare deployed stack with current state
-* `cdk synth`       emits the synthesized CloudFormation template
+    "AutoScalingEnable": false,
+    "AutoScalingMinCapacity": 1,
+    "AutoScalingMaxCapacity": 2,
+    "AutoScalingTargetInvocation": 50,
+
+    "TableName": "LogTable",
+
+    "AlarmThreshold": 200,
+    "SubscriptionEmails": ["kwonyul@amazon.com"]
+},
+...
+...
+```
+
+### ***instantiation in `infra/app-main.ts`***
+
+```typescript
+...
+...
+new EcsAlbServiceStack(appContext, appContext.appConfig.Stack.UserBackendSpring);
+...
+...
+```
+
+Since `EcsAlbServiceStack` abstracts each service(CodeCommit, ECR, ECS Service/Task, Dashboard, CICD Pipeline), everything can be automated by instantiating objects with proper configuration. This is one of the great advantages of AWS CDK.
+
+## How to extend service
+
+If you want to change or extend the functionality for `EcsAlbServiceStack`, define a new class that inherits from `EcsAlbServiceStack`.
+
+For example, if you want to replace the database from DDB table to RDS database, this is the right situation.
 
 ## How to clean up
 
@@ -216,6 +408,12 @@ Execute the following command, which will destroy all resources except ECR-Repos
 
 ```bash
 sh ./script/destroy_stacks.sh config/app-config-demo.json
+```
+
+In particular, `LoadTesterScriptStack` is currently under load-testing and should be deleted as soon as possible like this.
+
+```bash
+cdk destroy *LoadTesterScriptStack --profile [optional: your-profile-name]
 ```
 
 ## Security
