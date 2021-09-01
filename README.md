@@ -1,6 +1,6 @@
 # AWS ECS DevOps using AWS CDK
 
-This repository provides a general DevOps practices such MSA, IaC, CICD and Monitoring. AWS various services are used to provide DevOps best practices. All necessary cloud resources are modeled and deployed through AWS CDK.
+This repository provides DevOps practices necessary to develop applications based on Amazon Elastic Container Service(ECS) container. Various AWS services are used to support DevOps best practices such as MSA, IaC, CICD, Monitoring and Configuration Management. All necessary cloud resources are modeled and deployed through AWS Cloud Development Kit(CDK). Because AWS CDK abstracts AWS cloud resources as much as possible, we can use it to accelerate DevOps.
 
 Korean `Hands on Lab` Guide: [AWS-Builders-AWS-CDK-HoL-samples.pdf](https://github.com/aws-samples/aws-ecs-devops-using-aws-cdk/blob/hol_20210624/docs/pdf/AWS-Builders-AWS-CDK-HoL-samples.pdf)
 
@@ -13,12 +13,15 @@ Other "Using AWS CDK" series can be found at:
 
 ## Solution Key Concept
 
- `DevOps` encourages various practices to increase development productivity and speed deployment. Representative practies are:
+  DevOps encourages various practices to increase development productivity and speed deployment. Representative practies are:
 
-- MSA(Micro-service Architecture) as a architecture style
-- IaC(Infrastructure as Code) as a way to deal with infrastructure
-- CICD Pipeline(Continuous Integration Continuous Deploy) as a SCM & deployment automation
-- Dashboard as a status/usage monitoring
+- **MSA(Micro-service Architecture)** as a architecture style
+- **IaC(Infrastructure as Code)** as a way to deal with infrastructure
+- **CICD(Continuous Integration Continuous Deploy) Pipeline** as a SCM & deployment automation
+- **Monitoring Dashboard** as a status/usage monitoring
+- **Configuration Management** for maintaining a strict separation of configuration from code
+
+### Common DevOps Scenario
 
 A small number of DevOps team(engineers) should be able to provide the following environments(tool/service/infra) easily and quickly and scalably to each service team. At the same time, they must have ownership of the common areas and resources of each service. Conversely, service team(developers) should be able to focus on developing business logic.
 
@@ -32,11 +35,11 @@ These are the essential elements that each micro-service development team must h
 
 ## Solution Architecture
 
-- ***Container-based MSA***: each micro-services are implemented using AWS ECS(Cluster/Service/Task)
-- ***Programming-based IaC***: all cloud resources are modeld and provisioned using AWS CDK(Typescript)
-- ***Fully managed CICD***: Continuous integration and continuous deploy using AWS Code Series(Pipeline/Commit/Build/Deploy)
-- ***Fully managed Monitoring***: logging, metric, dashboard using Amazon CloudWatch
-- ***Service Discovery***: private DNS service registration & discovery using AWS Cloud Map
+- **Container-based MSA**: each micro-services are implemented using AWS ECS(Cluster/Service/Task)
+- **Programming-based IaC**: all cloud resources are modeld and provisioned using AWS CDK(Typescript)
+- **Fully managed CICD**: Continuous integration and continuous deploy using AWS Code Series(Pipeline/Commit/Build/Deploy)
+- **Fully managed Monitoring**: logging, metric, dashboard using Amazon CloudWatch
+- **Service Discovery**: private DNS service registration & discovery using AWS Cloud Map
 
 ![solution-arcitecture](docs/asset/solution-architecture.png)
 
