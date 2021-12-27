@@ -4,6 +4,10 @@ This repository provides DevOps practices necessary to develop applications base
 
 Korean `Hands on Lab` Guide: [AWS-Builders-AWS-CDK-HoL-samples.pdf](https://github.com/aws-samples/aws-ecs-devops-using-aws-cdk/blob/hol_20210624/docs/pdf/AWS-Builders-AWS-CDK-HoL-samples.pdf)
 
+ The basic structure of this CDK project is derived from the following project. Check out the repository for best practices for organizing CD projects.
+
+ - [aws-cdk-project-template-for-devops](https://github.com/aws-samples/aws-cdk-project-template-for-devops)
+
 Other "Using AWS CDK" series can be found at:
 
 - [AWS Serverless Using AWS CDK](https://github.com/aws-samples/aws-serverless-using-aws-cdk)
