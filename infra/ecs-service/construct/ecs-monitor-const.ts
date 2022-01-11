@@ -69,8 +69,8 @@ export class EcsAlbMonitorConstrunct extends base.BaseConstruct {
             this.addWidgets(
                 this.createWidget('DDB-Read', [props.table.metricConsumedReadCapacityUnits()], 12),
                 this.createWidget('DDB-Write', [props.table.metricConsumedWriteCapacityUnits()], 12),
-                this.createWidget('DDB-Latency', [props.table.metricSuccessfulRequestLatency({dimensions: {Operation: 'Scan'}}), 
-                                                    props.table.metricSuccessfulRequestLatency({dimensions: {Operation: 'PutItem'}})], 12),
+                this.createWidget('DDB-Latency', [props.table.metricSuccessfulRequestLatency({dimensionsMap: {Operation: 'Scan'}}), 
+                                                    props.table.metricSuccessfulRequestLatency({dimensionsMap: {Operation: 'PutItem'}})], 12),
                 this.createWidget('DDB-Throttled', [props.table.metric('WriteThrottleEvents', {statistic: 'Sum', unit: cloudwatch.Unit.COUNT}),
                                                     props.table.metric('ReadThrottleEvents', {statistic: 'Sum', unit: cloudwatch.Unit.COUNT})], 12),
             )
