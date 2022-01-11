@@ -11,10 +11,9 @@ import * as actions from '@aws-cdk/aws-codepipeline-actions';
 import * as base from '../../../lib/template/construct/base/base-construct'
 
 
-export interface EcsCicdProps extends base.ConstructProps {
+export interface EcsCicdProps extends base.ConstructCommonProps {
     vpc: ec2.IVpc;
     cluster: ecs.ICluster;
-    stackName: string;
     service: ecs.IBaseService;
     appPath: string;
     containerName: string;

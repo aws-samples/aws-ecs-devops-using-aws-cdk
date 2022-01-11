@@ -1,26 +1,26 @@
 import * as ec2 from '@aws-cdk/aws-ec2';
 import * as ecs from '@aws-cdk/aws-ecs';
+import * as sd from '@aws-cdk/aws-servicediscovery'
 
-import * as base from '../../lib/template/stack/base/base-stack';
+import * as base from './ecs-base-stack';
 import { AppContext } from '../../lib/template/app-context';
+import { Override } from '../../lib/template/stack/base/base-stack';
 
 
-export class EcsCommonServiceStack extends base.BaseStack {
+export class EcsCommonServiceStack extends base.EcsBaseStack {
 
     constructor(appContext: AppContext, stackConfig: any) {
         super(appContext, stackConfig);
+    }
 
-        const ecsClusterStackName = this.commonProps.appConfig.Stack.VpcInfra.Name;
-        const vpc = this.loadVpc(this.commonProps.appConfig.Stack.VpcInfra);
-        const cloudMapNamespace = this.loadCloudMapNamespace(ecsClusterStackName);
-        const ecsCluster = this.loadEcsCluster(ecsClusterStackName, vpc, cloudMapNamespace);
-
-        const ecsService = this.createEcsServiceTask(ecsCluster, 256, 512);
+    @Override
+    onEcsPostConstructor(vpc: ec2.IVpc, cluster: ecs.ICluster, ns: sd.IPrivateDnsNamespace): void {
+        this.createEcsServiceTask(cluster, 256, 512);
     }
 
     private createEcsServiceTask(cluster: ecs.ICluster, cpu: number, memory: number): ecs.FargateService {
         const baseName = this.stackName;
-        const targetServiceStackName = this.commonProps.appConfig.Stack[this.stackConfig.TargetStack].Name;
+        const targetServiceStackName = this.stackConfig.TargetStack;
 
         const taskDefinition = new ecs.FargateTaskDefinition(this, 'TaskDef', {
             cpu: cpu,
@@ -36,7 +36,7 @@ export class EcsCommonServiceStack extends base.BaseStack {
             environment: {
                 Namespace: `${this.projectPrefix}-NS`,
                 TargetServiceName: targetServiceStackName,
-                AlbDnsName: this.getParameter(targetServiceStackName, 'AlbDnsName')
+                AlbDnsName: this.getParameter(`${targetServiceStackName}AlbDnsName`)
             }
         });
 
@@ -51,9 +51,9 @@ export class EcsCommonServiceStack extends base.BaseStack {
         });
 
         const serviceSecurityGroup = service.connections.securityGroups[0];
-        const targetSecurityGroupId = this.getParameter(targetServiceStackName, 'ServiceSecurityGroupId')
+        const targetSecurityGroupId = this.getParameter(`${targetServiceStackName}ServiceSecurityGroupId`)
         const targetSecurityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, 'target-security-group', targetSecurityGroupId);
-        targetSecurityGroup.addIngressRule(serviceSecurityGroup, ec2.Port.tcp(this.commonProps.appConfig.Stack[this.stackConfig.TargetStack].PortNumber));
+        targetSecurityGroup.addIngressRule(serviceSecurityGroup, ec2.Port.tcp(parseInt(this.getVariable(`${this.stackConfig.TargetStack}`))));
 
         return service;
     }

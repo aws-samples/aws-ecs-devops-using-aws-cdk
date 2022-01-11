@@ -16,7 +16,7 @@ export class VpcInfraStack extends base.BaseStack {
             this.stackConfig.VPCMaxAzs,
             this.stackConfig.VPCCIDR,
             this.stackConfig.NATGatewayCount);
-        this.putParameter('VPCName', `${this.projectPrefix}/${this.stackConfig.VPCName}`);
+        this.putVariable('VpcName', `${this.stackName}/${this.stackConfig.VPCName}`)
 
         const ecsCluster = this.createEcsCluster(
             this.stackConfig.ECSClusterName,

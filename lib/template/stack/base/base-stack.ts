@@ -18,111 +18,83 @@
 
 import * as cdk from '@aws-cdk/core';
 import * as s3 from '@aws-cdk/aws-s3'
-import * as ssm from '@aws-cdk/aws-ssm'
-import * as ec2 from '@aws-cdk/aws-ec2'
-import * as ecs from '@aws-cdk/aws-ecs'
-import * as sd from '@aws-cdk/aws-servicediscovery'
 
 import { AppContext } from '../../app-context'
+import { AppConfig } from '../../app-config'
+import { CommonHelper, ICommonHelper } from '../../common/common-helper'
+import { CommonGuardian, ICommonGuardian } from '../../common/common-guardian'
+
+
+export function Override(target: any, propertyKey: string, descriptor: PropertyDescriptor){}
 
 export interface StackCommonProps extends cdk.StackProps {
     projectPrefix: string;
-    appConfig: any;
-    appConfigPath: any;
-    variable: any;
+    appConfig: AppConfig;
+    appConfigPath: string;
+    variables: any;
 }
 
-export class BaseStack extends cdk.Stack {
+export class BaseStack extends cdk.Stack implements ICommonHelper, ICommonGuardian {
+    protected stackConfig: any;
     protected projectPrefix: string;
     protected commonProps: StackCommonProps;
-    protected stackConfig: any;
 
-    protected vpc: ec2.IVpc;
-    protected ecsCluster: ecs.ICluster;
-    protected cloudMapNamespace: sd.INamespace;
+    private commonHelper: ICommonHelper;
+    private commonGuardian: ICommonGuardian;
 
     constructor(appContext: AppContext, stackConfig: any) {
         super(appContext.cdkApp, stackConfig.Name, appContext.stackCommonProps);
 
         this.stackConfig = stackConfig;
-        this.commonProps = appContext.stackCommonProps!;
-        this.projectPrefix = appContext.stackCommonProps!.projectPrefix;
-    }
+        this.commonProps = appContext.stackCommonProps;
+        this.projectPrefix = appContext.stackCommonProps.projectPrefix;
 
-    protected exportOutput(key: string, value: string) {
-        new cdk.CfnOutput(this, `Output-${key}`, {
-            exportName: `${this.stackName}-${key}`,
-            value: value
+        this.commonHelper = new CommonHelper({
+            construct: this,
+            env: this.commonProps.env!,
+            stackName: this.stackName,
+            projectPrefix: this.projectPrefix,
+            variables: this.commonProps.variables
+        });
+
+        this.commonGuardian = new CommonGuardian({
+            construct: this,
+            env: this.commonProps.env!,
+            stackName: this.stackName,
+            projectPrefix: this.projectPrefix,
+            variables: this.commonProps.variables
         });
     }
 
-    protected createS3Bucket(baseName: string): s3.Bucket {
-        const suffix: string = `${this.commonProps.env?.region}-${this.commonProps.env?.account?.substr(0, 5)}`
-
-        const s3Bucket = new s3.Bucket(this, baseName, {
-            bucketName: `${this.stackName}-${baseName}-${suffix}`.toLowerCase().replace('_', '-'),
-            versioned: false,
-            removalPolicy: cdk.RemovalPolicy.RETAIN // for prod, RETAIN is safe
-        });
-
-        return s3Bucket;
+    findEnumType<T>(enumType: T, target: string): T[keyof T] {
+        return this.commonHelper.findEnumType(enumType, target);
     }
 
-    protected importS3BucketByName(id: string, bucketName: string): s3.IBucket {
-        return s3.Bucket.fromBucketName(this, id, bucketName);
+    exportOutput(key: string, value: string) {
+        this.commonHelper.exportOutput(key, value);
     }
 
-    protected putParameter(paramKey: string, paramValue: string): string {
-        const paramKeyWithPrefix = `${this.stackName}-${paramKey}`;
-
-        new ssm.StringParameter(this, paramKey, {
-            parameterName: paramKeyWithPrefix,
-            stringValue: paramValue,
-        });
-
-        return paramKey;
+    putParameter(paramKey: string, paramValue: string): string {
+        return this.commonHelper.putParameter(paramKey, paramValue);
     }
 
-    protected getParameter(stackName: string, paramKey: string): string {
-        const paramKeyWithPrefix = `${stackName}-${paramKey}`;
-        
-        return ssm.StringParameter.valueForStringParameter(
-            this,
-            paramKeyWithPrefix
-        );
+    getParameter(paramKey: string): string {
+        return this.commonHelper.getParameter(paramKey);
     }
 
-    protected loadVpc(vpcStackConfig: any): ec2.IVpc {
-        if (this.vpc == undefined) {
-            this.vpc = ec2.Vpc.fromLookup(this, 'vpc', {
-                vpcName: `${vpcStackConfig.Name}/${vpcStackConfig.VPCName}`
-            });
-        }
-        return this.vpc;
+    putVariable(variableKey: string, variableValue: string) {
+        this.commonHelper.putVariable(variableKey, variableValue);
     }
 
-    protected loadCloudMapNamespace(ecsClusterStackName: string): sd.IPrivateDnsNamespace {
-        if (this.cloudMapNamespace == undefined) {
-            this.cloudMapNamespace = sd.PrivateDnsNamespace.fromPrivateDnsNamespaceAttributes(this, 'cloud-map', {
-                namespaceName: this.getParameter(ecsClusterStackName, 'CloudMapNamespaceName'),
-                namespaceArn: this.getParameter(ecsClusterStackName, 'CloudMapNamespaceArn'),
-                namespaceId: this.getParameter(ecsClusterStackName, 'CloudMapNamespaceId'),
-            });
-        }
-
-        return this.cloudMapNamespace;
+    getVariable(variableKey: string): string {
+        return this.commonHelper.getVariable(variableKey);
     }
 
-    protected loadEcsCluster(ecsClusterStackName: string, vpc: ec2.IVpc, cloudMapNamespace?: sd.INamespace): ecs.ICluster {
-        if (this.ecsCluster == undefined) {
-            this.ecsCluster = ecs.Cluster.fromClusterAttributes(this, 'ecs-cluster', {
-                vpc,
-                clusterName: this.getParameter(ecsClusterStackName, 'ECSClusterName'),
-                securityGroups: [],
-                defaultCloudMapNamespace: cloudMapNamespace
-            });
-        }
+    createS3BucketName(baseName: string): string {
+        return this.commonGuardian.createS3BucketName(baseName);
+    }
 
-        return this.ecsCluster;
+    createS3Bucket(baseName: string, encryption?: s3.BucketEncryption, versioned?: boolean): s3.Bucket {
+        return this.commonGuardian.createS3Bucket(baseName, encryption, versioned);
     }
 }

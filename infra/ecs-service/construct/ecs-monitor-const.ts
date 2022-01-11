@@ -11,8 +11,7 @@ import * as base from '../../../lib/template/construct/base/base-construct'
 
 const REFRESH_PERIOD_IN_MIN: number = 1;
 
-export interface EcsMonitorProps extends base.ConstructProps {
-    stackName: string;
+export interface EcsMonitorProps extends base.ConstructCommonProps {
     alb: lb2.ApplicationLoadBalancer;
     ecsSrevice: ecs.FargateService;
     table?: ddb.Table;

@@ -9,8 +9,7 @@ import * as loadBalancer from '@aws-cdk/aws-elasticloadbalancingv2';
 
 import * as base from '../../../lib/template/construct/base/base-construct'
 
-export interface EcsInfraProps extends base.ConstructProps  {
-    stackName: string;
+export interface EcsInfraProps extends base.ConstructCommonProps  {
     infraVersion: string;
     vpc: ec2.IVpc;
     cluster: ecs.ICluster;
@@ -56,7 +55,7 @@ export class EcsInfraConstrunct extends base.BaseConstruct {
 
         let targetServiceStackName = undefined;
         if (this.stackConfig.TargetStack != undefined) {
-            targetServiceStackName = props.appConfig.Stack[this.stackConfig.TargetStack].Name;
+            targetServiceStackName = this.stackConfig.TargetStack;
         }
 
         const baseName = props.stackName;
@@ -98,15 +97,16 @@ export class EcsInfraConstrunct extends base.BaseConstruct {
         this.service = albFargateService.service;
         this.alb = albFargateService.loadBalancer;
 
-        this.putParameter('AlbDnsName', albFargateService.loadBalancer.loadBalancerDnsName);
-        this.putParameter('ServiceSecurityGroupId', this.service.connections.securityGroups[0].securityGroupId);
+        this.putParameter(`${this.stackConfig.ShortStackName}AlbDnsName`, albFargateService.loadBalancer.loadBalancerDnsName);
+        this.putParameter(`${this.stackConfig.ShortStackName}ServiceSecurityGroupId`, this.service.connections.securityGroups[0].securityGroupId);
+        this.putVariable(`${this.stackConfig.ShortStackName}PortNumber`, this.stackConfig.PortNumber);
 
-        if (targetServiceStackName != undefined) {
-            const serviceSecurityGroup = this.service.connections.securityGroups[0];
-            const targetSecurityGroupId = this.getParameter(targetServiceStackName, 'ServiceSecurityGroupId')
-            const targetSecurityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, 'target-security-group', targetSecurityGroupId);
-            targetSecurityGroup.addIngressRule(serviceSecurityGroup, ec2.Port.tcp(props.appConfig.Stack[this.stackConfig.TargetStack].PortNumber));
-        }
+        // if (targetServiceStackName != undefined) {
+        //     const serviceSecurityGroup = this.service.connections.securityGroups[0];
+        //     const targetSecurityGroupId = this.getParameter(`${targetServiceStackName}ServiceSecurityGroupId`)
+        //     const targetSecurityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, 'target-security-group', targetSecurityGroupId);
+        //     targetSecurityGroup.addIngressRule(serviceSecurityGroup, ec2.Port.tcp(parseInt(this.getVariable(`${targetServiceStackName}PortNumber`))));
+        // }
     }
 
     private getContainerImage(props: EcsInfraProps): ecs.ContainerImage {

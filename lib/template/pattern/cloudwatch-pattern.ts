@@ -21,24 +21,31 @@ import * as cdk from '@aws-cdk/core';
 import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
 import { IWidget } from "@aws-cdk/aws-cloudwatch";
 
-export interface CloudWatchDashboardProps {
+export interface CloudWatchPatternProps {
     readonly projectFullName: string;
     readonly dashboardName: string;
     readonly period: cdk.Duration;
 }
 
-export class CloudWatchDashboard extends cdk.Construct {
+export class CloudWatchPattern extends cdk.Construct {
 
     private dashboard: cloudwatch.Dashboard;
-    private props: CloudWatchDashboardProps;
+    private props: CloudWatchPatternProps;
 
-    constructor(scope: cdk.Construct, id: string, props: CloudWatchDashboardProps) {
+    constructor(scope: cdk.Construct, id: string, props: CloudWatchPatternProps) {
         super(scope, id);
         this.props = props;
 
         this.dashboard = new cloudwatch.Dashboard(this, props.dashboardName, {
             dashboardName: `${props.projectFullName}-${props.dashboardName}`,
         });
+    }
+
+    public addTextTitleWidges(title: string) {
+        this.dashboard.addWidgets(new cloudwatch.TextWidget({
+            markdown: title,
+            width: 24,
+          }));
     }
 
     public addWidgets(...widgets: IWidget[]): void {

@@ -17,54 +17,82 @@
  */
 
 import * as cdk from '@aws-cdk/core';
-import * as ssm from '@aws-cdk/aws-ssm'
+import * as s3 from '@aws-cdk/aws-s3'
+
+import { CommonHelper, ICommonHelper } from '../../common/common-helper'
+import { CommonGuardian, ICommonGuardian } from '../../common/common-guardian'
 
 
-export interface ConstructProps {
-    projectPrefix: string;
-    stackName: string;
+export interface ConstructCommonProps {
     stackConfig: any;
-    appConfig: any;
+    stackName: string;
+    projectPrefix: string;
+    env: cdk.Environment;
+    variables?: any;
 }
 
-export class BaseConstruct extends cdk.Construct {
-    protected stackName: string;
+export class BaseConstruct extends cdk.Construct implements ICommonHelper, ICommonGuardian  {
     protected stackConfig: any;
-    protected appConfig: any;
+    protected projectPrefix: string;
+    protected commonProps: ConstructCommonProps;
 
-    constructor(scope: cdk.Construct, id: string, props: ConstructProps) {
+    private commonHelper: ICommonHelper;
+    private commonGuardian: ICommonGuardian;
+
+    constructor(scope: cdk.Construct, id: string, props: ConstructCommonProps) {
         super(scope, id);
 
-        this.stackName = props.stackName;
-        
         this.stackConfig = props.stackConfig;
-        this.appConfig = props.appConfig;
-    }
+        this.commonProps = props;
+        this.projectPrefix = props.projectPrefix;
 
-    protected exportOutput(key: string, value: string) {
-        new cdk.CfnOutput(this, `Output-${key}`, {
-            exportName: `${this.stackName}-${key}`,
-            value: value
-        });
-    }
-
-    protected putParameter(paramKey: string, paramValue: string): string {
-        const paramKeyWithPrefix = `${this.stackName}-${paramKey}`;
-
-        new ssm.StringParameter(this, paramKey, {
-            parameterName: paramKeyWithPrefix,
-            stringValue: paramValue,
+        this.commonHelper = new CommonHelper({
+            construct: this,
+            env: this.commonProps.env!,
+            stackName: this.commonProps.stackName,
+            projectPrefix: this.projectPrefix,
+            variables: this.commonProps.variables
         });
 
-        return paramKey;
+        this.commonGuardian = new CommonGuardian({
+            construct: this,
+            env: this.commonProps.env!,
+            stackName: this.commonProps.stackName,
+            projectPrefix: this.projectPrefix,
+            variables: this.commonProps.variables
+        });
+
     }
 
-    protected getParameter(stackName: string, paramKey: string): string {
-        const paramKeyWithPrefix = `${stackName}-${paramKey}`;
-        
-        return ssm.StringParameter.valueForStringParameter(
-            this,
-            paramKeyWithPrefix
-        );
+    findEnumType<T>(enumType: T, target: string): T[keyof T] {
+        return this.commonHelper.findEnumType(enumType, target);
+    }
+
+    exportOutput(key: string, value: string) {
+        this.commonHelper.exportOutput(key, value);
+    }
+
+    putParameter(paramKey: string, paramValue: string): string {
+        return this.commonHelper.putParameter(paramKey, paramValue);
+    }
+
+    getParameter(paramKey: string): string {
+        return this.commonHelper.getParameter(paramKey);
+    }
+
+    putVariable(variableKey: string, variableValue: string) {
+        this.commonHelper.putVariable(variableKey, variableValue);
+    }
+
+    getVariable(variableKey: string): string {
+        return this.commonHelper.getVariable(variableKey);
+    }
+
+    createS3BucketName(baseName: string): string {
+        return this.commonGuardian.createS3BucketName(baseName);
+    }
+
+    createS3Bucket(baseName: string, encryption?: s3.BucketEncryption, versioned?: boolean): s3.Bucket {
+        return this.commonGuardian.createS3Bucket(baseName, encryption, versioned);
     }
 } 
