@@ -50,7 +50,7 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
         const deployAction = new actions.EcsDeployAction({
             actionName: 'ECS_ContainerDeploy',
             service: props.service,
-            imageFile: new codepipeline.ArtifactPath(buildOutput, `imagedefinitions.json`),
+            imageFile: new codepipeline.ArtifactPath(buildOutput, `${props.appPath}/imagedefinitions.json`),
             deploymentTimeout: cdk.Duration.minutes(60)
         });
 
@@ -97,9 +97,6 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
                 },
                 'APP_PATH': {
                     value: `${props.appPath}`
-                },
-                'BACK_PATH': {
-                    value: '../..'
                 }
             },
             buildSpec: codebuild.BuildSpec.fromObject({
@@ -126,7 +123,6 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
                         commands: [
                             'echo "In Post-Build Phase"',
                             'pwd',
-                            'cd $BACK_PATH',
                             "printf '[{\"name\":\"%s\",\"imageUri\":\"%s\"}]' $CONTAINER_NAME $ECR_REPO_URI:$TAG > imagedefinitions.json",
                             "pwd; ls -al; cat imagedefinitions.json"
                         ]
@@ -134,7 +130,7 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
                 },
                 artifacts: {
                     files: [
-                        'imagedefinitions.json'
+                        `${props.appPath}/imagedefinitions.json`
                     ]
                 }
             }),
