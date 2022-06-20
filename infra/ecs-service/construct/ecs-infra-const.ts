@@ -9,7 +9,8 @@ import * as loadBalancer from '@aws-cdk/aws-elasticloadbalancingv2';
 
 import * as base from '../../../lib/template/construct/base/base-construct'
 
-export interface EcsInfraProps extends base.ConstructCommonProps  {
+export interface EcsInfraProps extends base.ConstructCommonProps {
+    shortStackName: string;
     infraVersion: string;
     vpc: ec2.IVpc;
     cluster: ecs.ICluster;
@@ -67,9 +68,18 @@ export class EcsInfraConstrunct extends base.BaseConstruct {
             desiredCount: props.desiredTasks,
             cpu: props.cpu,
             memoryLimitMiB: props.memory,
+
+            cloudMapOptions: {
+                name: props.shortStackName
+            },
+            circuitBreaker: {
+                rollback: true
+            },
+
             taskImageOptions: {
                 image: this.getContainerImage(props),
                 containerName: this.containerName,
+                containerPort: props.containerPort,
                 environment: {
                     APP_NAME: props.stackName,
                     INFRA_VERSION: props.infraVersion,
@@ -79,34 +89,41 @@ export class EcsInfraConstrunct extends base.BaseConstruct {
                     Namespace: `${props.projectPrefix}-NS`,
                     TargetServiceName: targetServiceStackName != undefined ? targetServiceStackName : 'not-defined'
                 },
+                enableLogging: true,
                 logDriver: new ecs.AwsLogDriver({
                     streamPrefix: `${baseName}Log`
                 }),
-                enableLogging: true,
-                containerPort: props.containerPort,
-                taskRole: this.createTaskRole(baseName),
-                executionRole: this.createExecutionRole(baseName)
-            },
-            cloudMapOptions: {
-                name: props.stackName,
-            },
-            circuitBreaker: {
-                rollback: true
-            },
+            }
         });
-        this.service = albFargateService.service;
+
         this.alb = albFargateService.loadBalancer;
+        this.service = albFargateService.service;
 
         this.putParameter(`${this.stackConfig.ShortStackName}AlbDnsName`, albFargateService.loadBalancer.loadBalancerDnsName);
         this.putParameter(`${this.stackConfig.ShortStackName}ServiceSecurityGroupId`, this.service.connections.securityGroups[0].securityGroupId);
         this.putVariable(`${this.stackConfig.ShortStackName}PortNumber`, this.stackConfig.PortNumber);
 
-        // if (targetServiceStackName != undefined) {
-        //     const serviceSecurityGroup = this.service.connections.securityGroups[0];
-        //     const targetSecurityGroupId = this.getParameter(`${targetServiceStackName}ServiceSecurityGroupId`)
-        //     const targetSecurityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, 'target-security-group', targetSecurityGroupId);
-        //     targetSecurityGroup.addIngressRule(serviceSecurityGroup, ec2.Port.tcp(parseInt(this.getVariable(`${targetServiceStackName}PortNumber`))));
-        // }
+        albFargateService.targetGroup.setAttribute('deregistration_delay.timeout_seconds', '60');
+
+        if (targetServiceStackName != undefined) {
+            this.addIngressRule(targetServiceStackName);
+        }
+
+        if (this.table != undefined) {
+            this.table.grantReadWriteData(this.service.taskDefinition.taskRole);
+        }
+
+        if (albFargateService.taskDefinition.executionRole) {
+            this.updateExecutionRole(albFargateService.taskDefinition.executionRole);
+        }
+    }
+
+    private addIngressRule(targetServiceStackName: string) {
+        const serviceSecurityGroup = this.service.connections.securityGroups[0];
+        const targetSecurityGroupId = this.getParameter(`${targetServiceStackName}ServiceSecurityGroupId`);
+        const targetSecurityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, 'target-security-group', targetSecurityGroupId);
+        const targetPortNumber = parseInt(this.getVariable(`${targetServiceStackName}PortNumber`));
+        targetSecurityGroup.addIngressRule(serviceSecurityGroup, ec2.Port.tcp(targetPortNumber));
     }
 
     private getContainerImage(props: EcsInfraProps): ecs.ContainerImage {
@@ -119,31 +136,8 @@ export class EcsInfraConstrunct extends base.BaseConstruct {
         }
     }
 
-    private createTaskRole(baseName: string): iam.Role {
-        const role = new iam.Role(this, `TaskRole`, {
-            roleName: `${baseName}TaskRole`,
-            assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com')
-        });
-
-        role.addToPolicy(new iam.PolicyStatement({
-            effect: iam.Effect.ALLOW,
-            resources: ['*'],
-            actions: [
-                "dynamodb:Scan",
-                "dynamodb:PutItem",
-            ]
-        }));
-
-        return role;
-    }
-
-    private createExecutionRole(baseName: string): iam.Role {
-        const role = new iam.Role(this, `ExecutionRole`, {
-            roleName: `${baseName}ExecutionRole`,
-            assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com')
-        });
-
-        role.addToPolicy(new iam.PolicyStatement({
+    private updateExecutionRole(role: iam.IRole) {
+        const statement = new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
             resources: ['*'],
             actions: [
@@ -152,16 +146,11 @@ export class EcsInfraConstrunct extends base.BaseConstruct {
                 "ecr:GetDownloadUrlForLayer",
                 "ecr:BatchGetImage"
             ]
-        }));
-        role.addToPolicy(new iam.PolicyStatement({
-            effect: iam.Effect.ALLOW,
-            resources: ['*'],
-            actions: [
-                "logs:CreateLogStream",
-                "logs:PutLogEvents"
-            ]
-        }));
+        });
 
-        return role;
+        const policy = new iam.Policy(this, 'exe-policy');
+        policy.addStatements(statement);
+
+        role.attachInlinePolicy(policy);
     }
 }

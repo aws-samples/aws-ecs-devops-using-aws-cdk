@@ -53,6 +53,7 @@ export class EcsAlbServiceStack extends base.EcsBaseStack {
             stackConfig: this.stackConfig,
             variables: this.commonProps.variables,
 
+            shortStackName: this.stackConfig.ShortStackName,
             infraVersion: this.stackConfig.InfraVersion,
             dockerImageType: this.stackConfig.DockerImageType,
             vpc: vpc,

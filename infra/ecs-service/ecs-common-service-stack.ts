@@ -27,7 +27,7 @@ export class EcsCommonServiceStack extends base.EcsBaseStack {
             memoryLimitMiB: memory,
         });
 
-        const container = taskDefinition.addContainer("Container", {
+        taskDefinition.addContainer("Container", {
             containerName: `${baseName}Container`,
             image: ecs.ContainerImage.fromAsset(this.stackConfig.AppPath),
             logging: new ecs.AwsLogDriver({
@@ -46,15 +46,20 @@ export class EcsCommonServiceStack extends base.EcsBaseStack {
             taskDefinition,
             desiredCount: this.stackConfig.DesiredTasks,
             cloudMapOptions: {
-                name: this.stackName,
+                name: this.stackConfig.ShortStackName
             }
         });
 
-        const serviceSecurityGroup = service.connections.securityGroups[0];
-        const targetSecurityGroupId = this.getParameter(`${targetServiceStackName}ServiceSecurityGroupId`)
-        const targetSecurityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, 'target-security-group', targetSecurityGroupId);
-        targetSecurityGroup.addIngressRule(serviceSecurityGroup, ec2.Port.tcp(parseInt(this.getVariable(`${this.stackConfig.TargetStack}`))));
+        this.addIngressRule(service, targetServiceStackName);
 
         return service;
+    }
+
+    private addIngressRule(service: ecs.FargateService, targetServiceStackName: string) {
+        const serviceSecurityGroup = service.connections.securityGroups[0];
+        const targetSecurityGroupId = this.getParameter(`${targetServiceStackName}ServiceSecurityGroupId`);
+        const targetSecurityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, 'target-security-group', targetSecurityGroupId);
+        const targetPortNumber = parseInt(this.getVariable(`${targetServiceStackName}PortNumber`));
+        targetSecurityGroup.addIngressRule(serviceSecurityGroup, ec2.Port.tcp(targetPortNumber));
     }
 }

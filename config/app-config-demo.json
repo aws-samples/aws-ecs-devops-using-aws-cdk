@@ -29,8 +29,8 @@
             
             "AppPath": "codes/sample-backend-fastapi",
             "DesiredTasks": 1,
-            "Cpu": 1024,
-            "Memory": 2048,
+            "Cpu": 256,
+            "Memory": 512,
 
             "AutoScalingEnable": false,
             "AutoScalingMinCapacity": 1,
@@ -51,12 +51,12 @@
             "PortNumber": 80,
             "InternetFacing": true,
 
-            "TargetStack": "SampleBackendFastapi",
+            "TargetStack": "SampleBackendFastapiStack",
             
             "AppPath": "codes/sample-frontend-flask",
             "DesiredTasks": 1,
-            "Cpu": 1024,
-            "Memory": 2048,
+            "Cpu": 256,
+            "Memory": 512,
 
             "AutoScalingEnable": false,
             "AutoScalingMinCapacity": 1,
@@ -69,7 +69,7 @@
         "LoadTesterScript": {
             "Name": "LoadTesterScriptStack",
 
-            "TargetStack": "SampleBackendFastapi",
+            "TargetStack": "SampleBackendFastapiStack",
 
             "AppPath": "codes/load-tester-script",
             "DesiredTasks": 1
