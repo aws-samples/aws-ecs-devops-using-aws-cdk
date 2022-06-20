@@ -11,22 +11,37 @@ echo $PROFILE_NAME
 echo .
 echo .
 
+echo ==--------SetAwsProfileEnv---------==
+if [ -z "$PROFILE_NAME" ]; then
+    echo "Project.Profile is empty, default AWS Profile is used"
+else
+    if [ -z "$ON_PIPELINE" ]; then
+        echo "$PROFILE_NAME AWS Profile is used"
+        export AWS_PROFILE=$PROFILE_NAME
+    else
+        echo "Now on CodePipeline, default AWS Profile is used"
+    fi
+fi
+echo .
+echo .
+
+echo ==--------CDKVersionCheck---------==
+alias cdk-local="./node_modules/.bin/cdk"
+# npm install -g aws-cdk
+cdk --version
+cdk-local --version
+echo .
+echo .
+
 echo ==--------ListStacks---------==
-cdk list
+cdk-local list
 echo .
 echo .
 
 echo ==--------DestroyStacksStepByStep---------==
-if [ -z "$PROFILE_NAME" ]; then
-    cdk destroy *-LoadTesterScriptStack --force
-    cdk destroy *-SampleFrontendFlaskStack --force
-    cdk destroy *-SampleBackendFastapiStack --force
-    cdk destroy *-VpcInfraStack --force
-else
-    cdk destroy *-LoadTesterScriptStack --force --profile $PROFILE_NAME
-    cdk destroy *-SampleFrontendFlaskStack --force --profile $PROFILE_NAME
-    cdk destroy *-SampleBackendFastapiStack --force --profile $PROFILE_NAME
-    cdk destroy *-VpcInfraStack --force --profile $PROFILE_NAME
-fi
+cdk-local destroy *-LoadTesterScriptStack --force
+cdk-local destroy *-SampleFrontendFlaskStack --force
+cdk-local destroy *-SampleBackendFastapiStack --force
+cdk-local destroy *-VpcInfraStack --force
 echo .
 echo .

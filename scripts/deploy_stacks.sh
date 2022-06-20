@@ -14,27 +14,37 @@ echo $PROFILE_NAME
 echo .
 echo .
 
-echo ==--------Setup---------==
-sh scripts/setup_initial.sh $APP_CONFIG
+echo ==--------SetAwsProfileEnv---------==
+if [ -z "$PROFILE_NAME" ]; then
+    echo "Project.Profile is empty, default AWS Profile is used"
+else
+    if [ -z "$ON_PIPELINE" ]; then
+        echo "$PROFILE_NAME AWS Profile is used"
+        export AWS_PROFILE=$PROFILE_NAME
+    else
+        echo "Now on CodePipeline, default AWS Profile is used"
+    fi
+fi
+echo .
+echo .
+
+echo ==--------CDKVersionCheck---------==
+alias cdk-local="./node_modules/.bin/cdk"
+# npm install -g aws-cdk
+cdk --version
+cdk-local --version
 echo .
 echo .
 
 echo ==--------ListStacks---------==
-cdk list
+cdk-local list
 echo .
 echo .
 
 echo ==--------DeployStacksStepByStep---------==
-if [ -z "$PROFILE_NAME" ]; then
-    cdk deploy *-VpcInfraStack --require-approval never
-    cdk deploy *-SampleBackendFastapiStack --require-approval never
-    cdk deploy *-SampleFrontendFlaskStack --require-approval never
-    cdk deploy *-LoadTesterScriptStack --require-approval never
-else
-    cdk deploy *-VpcInfraStack --require-approval never --profile $PROFILE_NAME
-    cdk deploy *-SampleBackendFastapiStack --require-approval never --profile $PROFILE_NAME
-    cdk deploy *-SampleFrontendFlaskStack --require-approval never --profile $PROFILE_NAME
-    cdk deploy *-LoadTesterScriptStack --require-approval never --profile $PROFILE_NAME
-fi
+cdk-local deploy *-VpcInfraStack --require-approval never
+cdk-local deploy *-SampleBackendFastapiStack --require-approval never
+cdk-local deploy *-SampleFrontendFlaskStack --require-approval never
+cdk-local deploy *-LoadTesterScriptStack --require-approval never
 echo .
 echo .

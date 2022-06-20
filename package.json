@@ -5,6 +5,9 @@
     "aws-ecs-devops-using-aws-cdk": "bin/aws-ecs-devops-using-aws-cdk.js"
   },
   "scripts": {
+    "cdk-ver": "cdk --version",
+    "cdk-ls": "cdk list",
+    "cdk-deploy": "cdk deploy",
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",

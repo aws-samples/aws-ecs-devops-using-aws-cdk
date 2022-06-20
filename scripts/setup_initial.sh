@@ -5,10 +5,8 @@ APP_CONFIG=$1
 export APP_CONFIG=$1
 
 echo ==--------CheckDedendencies---------==
-# npm install -g aws-cdk
 aws --version
 npm --version
-cdk --version
 jq --version
 
 ACCOUNT=$(cat $APP_CONFIG | jq -r '.Project.Account') #ex> 123456789123
@@ -23,17 +21,35 @@ echo $PROFILE_NAME
 echo .
 echo .
 
+echo ==--------SetAwsProfileEnv---------==
+if [ -z "$PROFILE_NAME" ]; then
+    echo "Project.Profile is empty, default AWS Profile is used"
+else
+    if [ -z "$ON_PIPELINE" ]; then
+        echo "$PROFILE_NAME AWS Profile is used"
+        export AWS_PROFILE=$PROFILE_NAME
+    else
+        echo "Now on CodePipeline, default AWS Profile is used"
+    fi
+fi
+echo .
+echo .
+
 echo ==--------InstallCDKDependencies---------==
 npm install
 echo .
 echo .
 
+echo ==--------CDKVersionCheck---------==
+alias cdk-local="./node_modules/.bin/cdk"
+# npm install -g aws-cdk
+cdk --version
+cdk-local --version
+echo .
+echo .
+
 echo ==--------BootstrapCDKEnvironment---------==
-if [ -z "$PROFILE_NAME" ]; then
-    cdk bootstrap aws://$ACCOUNT/$REGION
-else
-    cdk bootstrap aws://$ACCOUNT/$REGION --profile $PROFILE_NAME
-fi
+cdk-local bootstrap aws://$ACCOUNT/$REGION
 echo .
 echo .
 
