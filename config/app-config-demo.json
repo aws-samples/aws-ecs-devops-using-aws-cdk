@@ -3,7 +3,7 @@
         "Name": "EcsProject",
         "Stage": "Demo",
         "Account": "75157*******",
-        "Region": "us-east-2",
+        "Region": "ap-southeast-1",
         "Profile": "cdk-demo"
     },
 

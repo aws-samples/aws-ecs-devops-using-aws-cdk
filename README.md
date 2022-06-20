@@ -82,7 +82,7 @@ Please configure your AWS credential to grant AWS roles to your develop PC.
 aws configure --profile [your-profile] 
 AWS Access Key ID [None]: xxxxxx
 AWS Secret Access Key [None]:yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
-Default region name [None]: us-east-2 
+Default region name [None]: ap-southeast-1 
 Default output format [None]: json
 ...
 ...
@@ -115,7 +115,7 @@ The `config/app-config-demo.json` file describes how to configure deploy conditi
         "Name": "EcsProject",
         "Stage": "Demo",
         "Account": "75157*******",
-        "Region": "us-east-2",
+        "Region": "ap-southeast-1",
         "Profile": "cdk-demo"
     },
     ...
@@ -254,8 +254,8 @@ Because frontend is provided through public ALB(LoadBalancer's domain name is th
 ...
 ...
 Outputs:
-EcsProjectDemo-EcsAlbStack.EcsAlbInfraConstrunctServiceLoadBalancerDNSF445CBCD = EcsPr-EcsAl-1TNJ82PAWJ4IV-1937786873.us-east-2.elb.amazonaws.com
-EcsProjectDemo-EcsAlbStack.EcsAlbInfraConstrunctServiceServiceURL290953F6 = http://EcsPr-EcsAl-1TNJ82PAWJ4IV-1937786873.us-east-2.elb.amazonaws.com
+EcsProjectDemo-EcsAlbStack.EcsAlbInfraConstrunctServiceLoadBalancerDNSF445CBCD = EcsPr-EcsAl-1TNJ82PAWJ4IV-1937786873.ap-southeast-1.elb.amazonaws.com
+EcsProjectDemo-EcsAlbStack.EcsAlbInfraConstrunctServiceServiceURL290953F6 = http://EcsPr-EcsAl-1TNJ82PAWJ4IV-1937786873.ap-southeast-1.elb.amazonaws.com
 ...
 ...
 ```
