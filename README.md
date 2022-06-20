@@ -162,8 +162,8 @@ This project has 4 stacks, each of which does the following:
     
     "AppPath": "codes/sample-backend-fastapi",
     "DesiredTasks": 1,
-    "Cpu": 1024,
-    "Memory": 2048,
+    "Cpu": 256,
+    "Memory": 512,
 
     "AutoScalingEnable": false,
     "AutoScalingMinCapacity": 1,
@@ -193,12 +193,12 @@ And `frontend`'s configuration is like this.
     "PortNumber": 80,
     "InternetFacing": true,
 
-    "TargetStack": "SampleBackendFastapi",
+    "TargetStack": "SampleBackendFastapiStack",
     
     "AppPath": "codes/sample-frontend-flask",
     "DesiredTasks": 1,
-    "Cpu": 1024,
-    "Memory": 2048,
+    "Cpu": 256,
+    "Memory": 512,
 
     "AutoScalingEnable": false,
     "AutoScalingMinCapacity": 1,
@@ -279,20 +279,23 @@ ALB, URL_NAMESPACE) are utilized like this.
 echo --TARGET-URL--
 export URL_ALB=http://$AlbDnsName/items
 export URL_NAMESPACE=http://$TargetServiceName.$Namespace/items
-echo $URL
+echo "URL_ALB>> $URL_ALB"
+echo "URL_NAMESPACE>> $URL_NAMESPACE"
 
-echo --RESPONSE-TEST--
-curl $URL_ALB
 
 function ab_function {
+    echo --ALB-RESPONSE-TEST--
+    curl -X GET $URL_ALB
     ab -n 50 -c 2 $URL_ALB
+
+    echo --NS-RESPONSE-TEST--
+    curl -X GET $URL_NAMESPACE
     ab -n 50 -c 2 $URL_NAMESPACE
 
 }
 
 echo --START-LOAD-TEST--
-while true; do ab_function; sleep 5; done
-# while true; do ab -n 50 -c 2 $URL; sleep 5; done
+while true; do ab_function; sleep 10; done
 ```
 
 And CloudWatch's dashboard provides the current monitoring status like this.
