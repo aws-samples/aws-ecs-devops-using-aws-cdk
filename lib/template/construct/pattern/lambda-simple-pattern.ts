@@ -16,12 +16,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as cdk from '@aws-cdk/core';
-import { Construct } from '@aws-cdk/core';
-import * as lambda from '@aws-cdk/aws-lambda';
-import * as iam from '@aws-cdk/aws-iam';
-import * as s3 from '@aws-cdk/aws-s3';
-import { S3EventSource } from '@aws-cdk/aws-lambda-event-sources';
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import { S3EventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 
 import { BaseConstruct, ConstructCommonProps } from '../base/base-construct';
 

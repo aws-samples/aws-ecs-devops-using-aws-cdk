@@ -17,10 +17,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as cdk from '@aws-cdk/core';
-import { Construct } from '@aws-cdk/core';
-import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
-import { IWidget } from "@aws-cdk/aws-cloudwatch";
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
+import { IWidget } from "aws-cdk-lib/aws-cloudwatch";
 
 import { BaseConstruct, ConstructCommonProps } from '../base/base-construct';
 
@@ -101,7 +101,7 @@ export class CloudWatchSimplePattern extends BaseConstruct {
         return new cloudwatch.Metric({
             metricName,
             namespace: 'AWS/DynamoDB',
-            dimensions: dimensions,
+            dimensionsMap: dimensions,
             statistic: options.statistic,
             unit: options.unit,
             period: this.props.commonPeriod,
@@ -120,7 +120,7 @@ export class CloudWatchSimplePattern extends BaseConstruct {
         return new cloudwatch.Metric({
             metricName,
             namespace: 'AWS/Lambda',
-            dimensions: {
+            dimensionsMap: {
                 FunctionName: lambdaFunctionName.includes(':') ? lambdaFunctionName.split(':')[0] : lambdaFunctionName, //lambdaNameAlias.split(':')[0],
                 Resource: lambdaFunctionName      //lambdaNameAlias
             },
@@ -142,7 +142,7 @@ export class CloudWatchSimplePattern extends BaseConstruct {
         return new cloudwatch.Metric({
             metricName,
             namespace: 'AWS/IoT',
-            dimensions: {
+            dimensionsMap: {
                 RuleName: ruleName,
                 ActionType: actionType
             },
@@ -158,7 +158,7 @@ export class CloudWatchSimplePattern extends BaseConstruct {
         return new cloudwatch.Metric({
             metricName,
             namespace: 'AWS/Kinesis',
-            dimensions: {
+            dimensionsMap: {
                 StreamName: streamName
             },
             unit: cloudwatch.Unit.COUNT,
@@ -173,7 +173,7 @@ export class CloudWatchSimplePattern extends BaseConstruct {
             return new cloudwatch.Metric({
                 metricName,
                 namespace: '/aws/sagemaker/Endpoints',
-                dimensions: {
+                dimensionsMap: {
                     EndpointName: endpointName,
                     VariantName: variantName,
                 },
@@ -193,7 +193,7 @@ export class CloudWatchSimplePattern extends BaseConstruct {
             return new cloudwatch.Metric({
                 metricName,
                 namespace: 'AWS/SageMaker',
-                dimensions: {
+                dimensionsMap: {
                     EndpointName: endpointName,
                     VariantName: variantName,
                 },
@@ -212,7 +212,7 @@ export class CloudWatchSimplePattern extends BaseConstruct {
         return new cloudwatch.Metric({
             metricName,
             namespace: 'AWS/ES',
-            dimensions: {
+            dimensionsMap: {
                 DomainName: domainName,
                 ClientId: clientId
             },
@@ -228,7 +228,7 @@ export class CloudWatchSimplePattern extends BaseConstruct {
         return new cloudwatch.Metric({
             metricName,
             namespace: '.',
-            dimensions: {
+            dimensionsMap: {
                 DomainName: domainName,
                 '.': '.'
             },
@@ -245,7 +245,7 @@ export class CloudWatchSimplePattern extends BaseConstruct {
         return new cloudwatch.Metric({
             metricName,
             namespace: 'AWS/ApiGateway',
-            dimensions: {
+            dimensionsMap: {
                 ApiName: apiName,
             },
             statistic: options.statistic,
@@ -260,7 +260,7 @@ export class CloudWatchSimplePattern extends BaseConstruct {
         return new cloudwatch.Metric({
             metricName,
             namespace: 'AWS/SNS',
-            dimensions: {
+            dimensionsMap: {
                 TopicName: topicName,
             },
             statistic: options.statistic,
@@ -275,7 +275,7 @@ export class CloudWatchSimplePattern extends BaseConstruct {
         return new cloudwatch.Metric({
             metricName,
             namespace: namespace,
-            dimensions: dimensions,
+            dimensionsMap: dimensions,
             statistic: options.statistic,
             unit: options.unit,
             period: this.props.commonPeriod,
