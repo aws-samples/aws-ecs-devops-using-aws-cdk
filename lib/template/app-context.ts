@@ -31,9 +31,16 @@ export class AppContextError extends Error {
     }
 }
 
+export enum ProjectPrefixType {
+    NameStage,
+    NameHyphenStage,
+    Name
+}
+
 export interface AppContextProps {
     appConfigFileKey: string;
     contextArgs?: string[];
+    projectPrefixType?: ProjectPrefixType;
 }
 
 export class AppContext {
@@ -41,8 +48,11 @@ export class AppContext {
     public readonly appConfig: AppConfig;
     public readonly stackCommonProps: StackCommonProps;
 
+    private readonly appContextProps: AppContextProps;
+
     constructor(props: AppContextProps) {
         this.cdkApp = new cdk.App();
+        this.appContextProps = props;
 
         try {
             const appConfigFile = this.findAppConfigFile(props.appConfigFileKey);
@@ -56,7 +66,7 @@ export class AppContext {
         } catch (e) {
             console.error(`==> CDK App-Config File is empty, 
             set up your environment variable(Usage: export ${props.appConfigFileKey}=config/app-config-xxx.json) 
-            or append inline-argurment(Usage: cdk list --context ${props.appConfigFileKey}=config/app-config-xxx.json)`);
+            or append inline-argurment(Usage: cdk list --context ${props.appConfigFileKey}=config/app-config-xxx.json)`, e);
             throw new AppContextError('Fail to find App-Config json file');
         }
     }
@@ -104,7 +114,15 @@ export class AppContext {
     }
 
     private getProjectPrefix(projectName: string, projectStage: string): string {
-        return `${projectName}${projectStage}`;
+        let prefix = `${projectName}${projectStage}`;
+
+        if (this.appContextProps.projectPrefixType === ProjectPrefixType.NameHyphenStage) {
+            prefix = `${projectName}-${projectStage}`;
+        } else if (this.appContextProps.projectPrefixType === ProjectPrefixType.Name) {
+            prefix = projectName;
+        }
+
+        return prefix;
     }
 
     private loadAppConfigFile(filePath: string, contextArgs?: string[]): any {
@@ -123,28 +141,23 @@ export class AppContext {
     private updateContextArgs(appConfig: any, contextArgs: string[]) {
         for (let key of contextArgs) {
             const jsonKeys = key.split('.');
-            let oldValue = '';
+            let oldValue = undefined;
             const newValue: string = this.cdkApp.node.tryGetContext(key);
-
-            if (newValue != undefined) {
-                if (jsonKeys.length == 1) {
-                    oldValue = appConfig[jsonKeys[0]];
-                    appConfig[jsonKeys[0]] = newValue;
-                } else if (jsonKeys.length == 2) {
-                    oldValue = appConfig[jsonKeys[0]][jsonKeys[1]]
-                    appConfig[jsonKeys[0]][jsonKeys[1]] = newValue;
-                } else if (jsonKeys.length == 3) {
-                    oldValue = appConfig[jsonKeys[0]][jsonKeys[1]][jsonKeys[2]];
-                    appConfig[jsonKeys[0]][jsonKeys[1]][jsonKeys[2]] = newValue;
-                } else if (jsonKeys.length == 4) {
-                    oldValue = appConfig[jsonKeys[0]][jsonKeys[1]][jsonKeys[2]][jsonKeys[3]];
-                    appConfig[jsonKeys[0]][jsonKeys[1]][jsonKeys[2]][jsonKeys[3]] = newValue;
-                } else if (jsonKeys.length == 5) {
-                    oldValue = appConfig[jsonKeys[0]][jsonKeys[1]][jsonKeys[2]][jsonKeys[3]][jsonKeys[4]];
-                    appConfig[jsonKeys[0]][jsonKeys[1]][jsonKeys[2]][jsonKeys[3]][jsonKeys[4]] = newValue;
+    
+            if (newValue != undefined && jsonKeys.length > 0) {
+                try {
+                    oldValue = jsonKeys.reduce((reducer: any, pointer: string) => reducer.hasOwnProperty(pointer) ? reducer[pointer] : undefined, appConfig);
+                } catch(e) {
+                    console.error(`[ERROR] updateContextArgs: This key[${key}] is an undefined value in Json-Config file.\n`, e);
+                    throw e;
                 }
-
-                console.info(`updateContextArgs: ${key} = ${oldValue}-->${newValue}`);
+    
+                jsonKeys.reduce((reducer: any, pointer: string, count: number) => {
+                    if (count == jsonKeys.length - 1) reducer[pointer] = newValue;
+                    return reducer[pointer];
+                }, appConfig);
+    
+                console.info(`[INFO] updateContextArgs: Updated ${key} = ${oldValue}-->${newValue}`);
             }
         }
     }
