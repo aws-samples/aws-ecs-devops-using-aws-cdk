@@ -36,7 +36,9 @@ export class EcsCommonServiceStack extends base.EcsBaseStack {
             environment: {
                 Namespace: `${this.projectPrefix}-NS`,
                 TargetServiceName: targetServiceStackName,
-                AlbDnsName: this.getParameter(`${targetServiceStackName}AlbDnsName`)
+                AlbDnsName: this.getParameter(`${targetServiceStackName}AlbDnsName`),
+                RequestCount: String(this.stackConfig.RequestCount),
+                SleepPeriodInSec: String(this.stackConfig.SleepPeriodInSec)
             }
         });
 
