@@ -1,6 +1,6 @@
-import * as cdk from '@aws-cdk/core';
-import * as ecr from '@aws-cdk/aws-ecr';
-import * as codecommit from '@aws-cdk/aws-codecommit';
+import { Construct } from 'constructs';
+import * as ecr from 'aws-cdk-lib/aws-ecr';
+import * as codecommit from 'aws-cdk-lib/aws-codecommit';
 
 import * as base from '../../../lib/template/construct/base/base-construct'
 
@@ -13,7 +13,7 @@ export class EcsRepoConstrunct extends base.BaseConstruct {
     public gitRepo: codecommit.Repository;
     public ecrRepo: ecr.Repository;
 
-    constructor(scope: cdk.Construct, id: string, props: EcsRepoProps) {
+    constructor(scope: Construct, id: string, props: EcsRepoProps) {
         super(scope, id, props);
 
         const repoSuffix = 'repo';

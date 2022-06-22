@@ -1,6 +1,6 @@
-import * as ec2 from '@aws-cdk/aws-ec2';
-import * as ecs from '@aws-cdk/aws-ecs';
-import * as sd from '@aws-cdk/aws-servicediscovery'
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as sd from 'aws-cdk-lib/aws-servicediscovery'
 
 import * as base from './ecs-base-stack';
 import { AppContext } from '../../lib/template/app-context';

@@ -1,11 +1,12 @@
-import * as cdk from '@aws-cdk/core';
-import * as ec2 from '@aws-cdk/aws-ec2';
-import * as ddb from '@aws-cdk/aws-dynamodb';
-import * as iam from '@aws-cdk/aws-iam';
-import * as ecs from '@aws-cdk/aws-ecs';
-import * as ecr from '@aws-cdk/aws-ecr';
-import * as ecsPatterns from '@aws-cdk/aws-ecs-patterns';
-import * as loadBalancer from '@aws-cdk/aws-elasticloadbalancingv2';
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as ddb from 'aws-cdk-lib/aws-dynamodb';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as ecr from 'aws-cdk-lib/aws-ecr';
+import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
+import * as loadBalancer from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 
 import * as base from '../../../lib/template/construct/base/base-construct'
 
@@ -34,7 +35,7 @@ export class EcsInfraConstrunct extends base.BaseConstruct {
     service: ecs.FargateService;
     alb: loadBalancer.ApplicationLoadBalancer;
 
-    constructor(scope: cdk.Construct, id: string, props: EcsInfraProps) {
+    constructor(scope: Construct, id: string, props: EcsInfraProps) {
         super(scope, id, props);
 
         if (props.tableName != undefined) {
