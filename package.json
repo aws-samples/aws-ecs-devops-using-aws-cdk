@@ -17,24 +17,16 @@
     "@aws-cdk/assert": "1.138.0",
     "@types/jest": "^26.0.10",
     "@types/node": "10.17.27",
-    "aws-cdk": "^1.138.0",
+    "aws-cdk": "2.18.0",
     "jest": "^27.0.6",
     "ts-jest": "^26.2.0",
     "ts-node": "^9.0.0",
     "typescript": "~3.9.7"
   },
   "dependencies": {
-    "env-var": "6.3.0",
-    "@aws-cdk/core": "1.138.0",
-    "@aws-cdk/aws-dynamodb": "1.138.0",
-    "@aws-cdk/aws-ec2": "1.138.0",
-    "@aws-cdk/aws-ecs": "1.138.0",
-    "@aws-cdk/aws-ecs-patterns": "1.138.0",
-    "@aws-cdk/aws-codedeploy": "1.138.0",
-    "@aws-cdk/aws-ecr": "1.138.0",
-    "@aws-cdk/aws-ses": "1.138.0",
-    "@aws-cdk/aws-codepipeline-actions": "1.138.0",
-    "@aws-cdk/aws-cloudwatch-actions": "1.138.0",
+      "env-var": "6.3.0",
+      "aws-cdk-lib": "2.18.0",
+      "constructs": "^10.0.0",
     "source-map-support": "^0.5.16"
   }
 }
