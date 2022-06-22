@@ -273,13 +273,16 @@ And CloudWatch's dashboard provides the current monitoring status like this.
 
 ### ***Backend Test***
 
-Because backend is provided through private ALB, we can not use web browser. `LoadTesterScriptStack` was provided for testing that internally in VPC, which is sending a lot of requests within the same VPC. `codes/load-tester-script/app/entrypoint.sh` file describes how to work in docker container, where two types of URL(URL_
-ALB, URL_NAMESPACE) are utilized like this.
+Because backend is provided through private ALB, we can not use web browser. `LoadTesterScriptStack` is provided for testing that internally in VPC, which is sending a lot of requests within the same VPC. `codes/load-tester-script/app/entrypoint.sh` file describes how to work in docker container, where two types of URL(URL_ALB, URL_NAMESPACE) are utilized like this.
 
 ```bash
 #!/bin/sh
 
-echo --TARGET-URL--
+echo "--TEST CONFIGURATION--"
+echo "RequestCount: $RequestCount"
+echo "SleepPeriodInSec: $SleepPeriodInSec"
+
+echo "--TARGET URL--"
 export URL_ALB=http://$AlbDnsName/items
 export URL_NAMESPACE=http://$TargetServiceName.$Namespace/items
 echo "URL_ALB>> $URL_ALB"
@@ -289,22 +292,37 @@ echo "URL_NAMESPACE>> $URL_NAMESPACE"
 function ab_function {
     echo --ALB-RESPONSE-TEST--
     curl -X GET $URL_ALB
-    ab -n 50 -c 2 $URL_ALB
+    ab -n $RequestCount -c 1 $URL_ALB
 
     echo --NS-RESPONSE-TEST--
     curl -X GET $URL_NAMESPACE
-    ab -n 50 -c 2 $URL_NAMESPACE
+    ab -n $RequestCount -c 1 $URL_NAMESPACE
 
 }
 
-echo --START-LOAD-TEST--
-while true; do ab_function; sleep 10; done
+echo "--START LOAD TEST--"
+while true; do ab_function; sleep $SleepPeriodInSec; done
+```
+
+If you want to change request-load, please change these values(DesiredTasks, RequestCount, SleepPeriodInSec) in `app-config-demo.json` and re-deploy `LoadTesterScriptStack` stack.
+
+```json
+"LoadTesterScript": {
+    "Name": "LoadTesterScriptStack",
+
+    "TargetStack": "SampleBackendFastapiStack",
+
+    "AppPath": "codes/load-tester-script",
+    "DesiredTasks": 1,
+    "RequestCount": 10,
+    "SleepPeriodInSec": 1
+}
 ```
 
 And CloudWatch's dashboard provides the current monitoring status like this.
 ![backend-dashboard](docs/asset/backend-dashboard.png)
 
-***Caution***: Because the current DDB table's capacity is very low, `RequestCount` is also low. The answer to this can be found through below graph. That is, DDB table's throttle metric continued to occur and the backend could not respond quickly, resulting in low TPS.
+***Caution***: Because the current DDB table's capacity is very low, `RequestCount` is also low. The answer to this can be found through below graph. That is, DDB table's throttle metric continued to occur and the backend could not respond quickly, resulting in low TPS. To solve this issue, please change the `ecs-infra-consts.ts` file to increase RCU in DDB Table. What should we do to control these values from the outside? I'll leave this as a homework assignment.
 
 ![backend-throttle](docs/asset/backend-throttle.png)
 
