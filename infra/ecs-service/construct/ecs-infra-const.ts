@@ -1,3 +1,20 @@
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: MIT-0
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this
+ * software and associated documentation files (the "Software"), to deal in the Software
+ * without restriction, including without limitation the rights to use, copy, modify,
+ * merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
@@ -104,7 +121,7 @@ export class EcsInfraConstrunct extends base.BaseConstruct {
         this.putParameter(`${this.stackConfig.ShortStackName}ServiceSecurityGroupId`, this.service.connections.securityGroups[0].securityGroupId);
         this.putVariable(`${this.stackConfig.ShortStackName}PortNumber`, this.stackConfig.PortNumber);
 
-        albFargateService.targetGroup.setAttribute('deregistration_delay.timeout_seconds', '60');
+        albFargateService.targetGroup.setAttribute('deregistration_delay.timeout_seconds', '30');
 
         if (targetServiceStackName != undefined) {
             this.addIngressRule(targetServiceStackName);
@@ -115,7 +132,7 @@ export class EcsInfraConstrunct extends base.BaseConstruct {
         }
 
         if (albFargateService.taskDefinition.executionRole) {
-            this.updateExecutionRole(albFargateService.taskDefinition.executionRole);
+            this.appendEcrReadPolicy('ecs-ecr-get-image', albFargateService.taskDefinition.executionRole);
         }
     }
 
@@ -137,7 +154,7 @@ export class EcsInfraConstrunct extends base.BaseConstruct {
         }
     }
 
-    private updateExecutionRole(role: iam.IRole) {
+    private appendEcrReadPolicy(baseName: string, role: iam.IRole) {
         const statement = new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
             resources: ['*'],
@@ -149,7 +166,7 @@ export class EcsInfraConstrunct extends base.BaseConstruct {
             ]
         });
 
-        const policy = new iam.Policy(this, 'exe-policy');
+        const policy = new iam.Policy(this, baseName);
         policy.addStatements(statement);
 
         role.attachInlinePolicy(policy);
