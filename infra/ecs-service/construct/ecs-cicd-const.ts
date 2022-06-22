@@ -1,6 +1,22 @@
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: MIT-0
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this
+ * software and associated documentation files (the "Software"), to deal in the Software
+ * without restriction, including without limitation the rights to use, copy, modify,
+ * merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 import * as cdk from '@aws-cdk/core';
 import * as iam from '@aws-cdk/aws-iam';
-import * as ec2 from '@aws-cdk/aws-ec2';
 import * as ecs from '@aws-cdk/aws-ecs';
 import * as ecr from '@aws-cdk/aws-ecr';
 import * as codecommit from '@aws-cdk/aws-codecommit';
@@ -12,13 +28,11 @@ import * as base from '../../../lib/template/construct/base/base-construct'
 
 
 export interface EcsCicdProps extends base.ConstructCommonProps {
-    vpc: ec2.IVpc;
-    cluster: ecs.ICluster;
     service: ecs.IBaseService;
     appPath: string;
     containerName: string;
-    repo: codecommit.Repository;
-    ecrRepo: ecr.Repository;
+    repo: codecommit.IRepository;
+    ecrRepo: ecr.IRepository;
 }
 
 export class EcsCicdConstrunct extends base.BaseConstruct {
@@ -76,7 +90,7 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
         });
     }
 
-    private createBuildProject(ecrRepo: ecr.Repository, props: EcsCicdProps): codebuild.Project {
+    private createBuildProject(ecrRepo: ecr.IRepository, props: EcsCicdProps): codebuild.Project {
         const project = new codebuild.Project(this, 'DockerBuild', {
             projectName: `${props.stackName}DockerBuild`,
             environment: {
@@ -85,9 +99,6 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
                 privileged: true
             },
             environmentVariables: {
-                'CLUSTER_NAME': {
-                    value: `${props.cluster.clusterName}`
-                },
                 'ECR_REPO_URI': {
                     value: `${ecrRepo.repositoryUri}`
                 },
@@ -113,8 +124,8 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
                             'echo "In Build Phase"',
                             'cd $APP_PATH',
                             'ls -l',
-                            `docker build -t $ECR_REPO_URI:$TAG .`,
                             '$(aws ecr get-login --no-include-email)',
+                            `docker build -t $ECR_REPO_URI:$TAG .`,
                             'docker push $ECR_REPO_URI:$TAG'
                         ]
                     },
@@ -136,18 +147,26 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
         });
 
         ecrRepo.grantPullPush(project.role!);
-
-        project.addToRolePolicy(new iam.PolicyStatement({
-            actions: [
-                "ecs:DescribeCluster",
-                "ecr:GetAuthorizationToken",
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:GetDownloadUrlForLayer"
-            ],
-            resources: [props.cluster.clusterArn],
-        }));
+        this.appendEcrReadPolicy('build-policy', project.role!);
 
         return project;
+    }
+
+    private appendEcrReadPolicy(baseName: string, role: iam.IRole) {
+        const statement = new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            resources: ['*'],
+            actions: [
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage"
+            ]
+        });
+
+        const policy = new iam.Policy(this, baseName);
+        policy.addStatements(statement);
+
+        role.attachInlinePolicy(policy);
     }
 }

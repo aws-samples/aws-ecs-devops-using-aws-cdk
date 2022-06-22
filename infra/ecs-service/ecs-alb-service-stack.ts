@@ -78,8 +78,6 @@ export class EcsAlbServiceStack extends base.EcsBaseStack {
             stackConfig: this.stackConfig,
             variables: this.commonProps.variables,
 
-            vpc: vpc,
-            cluster: cluster,
             service: infra.service,
             containerName: infra.containerName,
             appPath: this.stackConfig.AppPath,
