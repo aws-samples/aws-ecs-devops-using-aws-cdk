@@ -73,8 +73,11 @@
 
             "AppPath": "codes/load-tester-script",
             "DesiredTasks": 1,
-            "RequestCount": 10,
-            "SleepPeriodInSec": 1
+
+            "Environment": {
+                "RequestCount": 10,
+                "SleepPeriodInSec": 1
+            }
         }
     }
 }
