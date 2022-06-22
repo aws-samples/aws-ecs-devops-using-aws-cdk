@@ -33,13 +33,7 @@ export class EcsCommonServiceStack extends base.EcsBaseStack {
             logging: new ecs.AwsLogDriver({
                 streamPrefix: `${baseName}Log`
             }),
-            environment: {
-                Namespace: `${this.projectPrefix}-NS`,
-                TargetServiceName: targetServiceStackName,
-                AlbDnsName: this.getParameter(`${targetServiceStackName}AlbDnsName`),
-                RequestCount: String(this.stackConfig.RequestCount),
-                SleepPeriodInSec: String(this.stackConfig.SleepPeriodInSec)
-            }
+            environment: this.createEnvironment(targetServiceStackName)
         });
 
         const service = new ecs.FargateService(this, 'Service', {
@@ -55,6 +49,20 @@ export class EcsCommonServiceStack extends base.EcsBaseStack {
         this.addIngressRule(service, targetServiceStackName);
 
         return service;
+    }
+
+    private createEnvironment(targetServiceStackName: string): any {
+        const env: any = {
+            'Namespace': `${this.projectPrefix}-NS`,
+            'TargetServiceName': targetServiceStackName,
+            'AlbDnsName': this.getParameter(`${targetServiceStackName}AlbDnsName`),
+        }
+
+        for (let item in this.stackConfig.Environment) {
+            env[item] = String(this.stackConfig.Environment[item]);
+        }
+
+        return env;
     }
 
     private addIngressRule(service: ecs.FargateService, targetServiceStackName: string) {
