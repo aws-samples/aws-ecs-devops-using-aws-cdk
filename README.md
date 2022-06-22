@@ -2,11 +2,14 @@
 
 This repository provides DevOps practices necessary to develop applications based on Amazon Elastic Container Service(ECS) container. Various AWS services are used to support DevOps best practices such as MSA, IaC, CICD, Monitoring and Configuration Management. All necessary cloud resources are modeled and deployed through AWS Cloud Development Kit(CDK). Because AWS CDK abstracts AWS cloud resources as much as possible, we can use it to accelerate DevOps.
 
-Korean `Hands on Lab` Guide: [AWS-Builders-AWS-CDK-HoL-samples.pdf](https://github.com/aws-samples/aws-ecs-devops-using-aws-cdk/blob/hol_20210624/docs/pdf/AWS-Builders-AWS-CDK-HoL-samples.pdf)
+This sample suports both CDK Ver1 and CDK Ver2.
 
- The basic structure of this CDK project is derived from the following project. Check out the repository for best practices for organizing CD projects.
+- AWS CDK Version1 branch: [release_cdk_v1](https://github.com/aws-samples/aws-ecs-devops-using-aws-cdk/tree/release_cdk_v1)
+- AWS CDK Version2 branch: [release_cdk_v2](https://github.com/aws-samples/aws-ecs-devops-using-aws-cdk/tree/release_cdk_v2)
 
- - [aws-cdk-project-template-for-devops](https://github.com/aws-samples/aws-cdk-project-template-for-devops)
+ The basic structure of this CDK project is derived from the following project. Refer to the repository how to design CDK application and orgnize CDK project.
+
+- [aws-cdk-project-template-for-devops](https://github.com/aws-samples/aws-cdk-project-template-for-devops)
 
 Other "Using AWS CDK" series can be found at:
 
