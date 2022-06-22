@@ -1,3 +1,20 @@
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: MIT-0
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this
+ * software and associated documentation files (the "Software"), to deal in the Software
+ * without restriction, including without limitation the rights to use, copy, modify,
+ * merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ddb from 'aws-cdk-lib/aws-dynamodb';
@@ -11,6 +28,7 @@ import * as lb2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as base from '../../../lib/template/construct/base/base-construct'
 
 const REFRESH_PERIOD_IN_MIN: number = 1;
+const METRIC_PERIOD_IN_SEC: number = 60;
 
 export interface EcsMonitorProps extends base.ConstructCommonProps {
     alb: lb2.ApplicationLoadBalancer;
@@ -34,21 +52,25 @@ export class EcsAlbMonitorConstrunct extends base.BaseConstruct {
             dashboardName: `${props.stackName}-${dashboardName}`,
         });
 
+        const metricOptions: cloudwatch.MetricOptions = {
+            period: cdk.Duration.seconds(METRIC_PERIOD_IN_SEC)
+        };
+
         this.addWidgets(new cloudwatch.SingleValueWidget({
             title: `ALB-Request-Monitor`,
             metrics: [
-                props.alb.metricRequestCount(), 
-                props.alb.metricHttpCodeTarget(lb2.HttpCodeTarget.TARGET_2XX_COUNT),
-                props.alb.metricHttpCodeTarget(lb2.HttpCodeTarget.TARGET_3XX_COUNT),
-                props.alb.metricHttpCodeTarget(lb2.HttpCodeTarget.TARGET_4XX_COUNT),
-                props.alb.metricHttpCodeTarget(lb2.HttpCodeTarget.TARGET_5XX_COUNT),
+                props.alb.metricRequestCount(metricOptions), 
+                props.alb.metricHttpCodeTarget(lb2.HttpCodeTarget.TARGET_2XX_COUNT, metricOptions),
+                props.alb.metricHttpCodeTarget(lb2.HttpCodeTarget.TARGET_3XX_COUNT, metricOptions),
+                props.alb.metricHttpCodeTarget(lb2.HttpCodeTarget.TARGET_4XX_COUNT, metricOptions),
+                props.alb.metricHttpCodeTarget(lb2.HttpCodeTarget.TARGET_5XX_COUNT, metricOptions),
             ],
             width: 24,
             height: 3
         }));
 
         const baseName = 'ALB-Request';
-        const alarm = this.createMetricAlarm(baseName, props.alb.metricRequestCount())
+        const alarm = this.createMetricAlarm(baseName, props.alb.metricRequestCount(metricOptions))
         this.addWidgets(new cloudwatch.AlarmWidget({
             title: baseName,
             alarm: alarm,
@@ -57,22 +79,22 @@ export class EcsAlbMonitorConstrunct extends base.BaseConstruct {
         }));
 
         this.addWidgets(
-            this.createWidget('ALB-Response', [props.alb.metricTargetResponseTime()], 24),
+            this.createWidget('ALB-Response', [props.alb.metricTargetResponseTime(metricOptions)], 24),
         )
 
         this.addWidgets(
-            this.createWidget('ECS-CPU', [props.ecsSrevice.metricCpuUtilization()], 12),
-            this.createWidget('ECS-Memory', [props.ecsSrevice.metricMemoryUtilization()], 12),
+            this.createWidget('ECS-CPU', [props.ecsSrevice.metricCpuUtilization(metricOptions)], 12),
+            this.createWidget('ECS-Memory', [props.ecsSrevice.metricMemoryUtilization(metricOptions)], 12),
         )
 
         if (props.table != undefined) {
             this.addWidgets(
-                this.createWidget('DDB-Read', [props.table.metricConsumedReadCapacityUnits()], 12),
-                this.createWidget('DDB-Write', [props.table.metricConsumedWriteCapacityUnits()], 12),
-                this.createWidget('DDB-Latency', [props.table.metricSuccessfulRequestLatency({dimensionsMap: {Operation: 'Scan'}}), 
-                                                    props.table.metricSuccessfulRequestLatency({dimensionsMap: {Operation: 'PutItem'}})], 12),
-                this.createWidget('DDB-Throttled', [props.table.metric('WriteThrottleEvents', {statistic: 'Sum', unit: cloudwatch.Unit.COUNT}),
-                                                    props.table.metric('ReadThrottleEvents', {statistic: 'Sum', unit: cloudwatch.Unit.COUNT})], 12),
+                this.createWidget('DDB-Read', [props.table.metricConsumedReadCapacityUnits(metricOptions)], 12),
+                this.createWidget('DDB-Write', [props.table.metricConsumedWriteCapacityUnits(metricOptions)], 12),
+                this.createWidget('DDB-Latency', [props.table.metricSuccessfulRequestLatency({period: cdk.Duration.seconds(METRIC_PERIOD_IN_SEC), dimensionsMap: {Operation: 'Scan'}}), 
+                                                    props.table.metricSuccessfulRequestLatency({period: cdk.Duration.seconds(METRIC_PERIOD_IN_SEC), dimensionsMap: {Operation: 'PutItem'}})], 12),
+                this.createWidget('DDB-Throttled', [props.table.metric('WriteThrottleEvents', {period: cdk.Duration.seconds(METRIC_PERIOD_IN_SEC), statistic: 'Sum', unit: cloudwatch.Unit.COUNT}),
+                                                    props.table.metric('ReadThrottleEvents', {period: cdk.Duration.seconds(METRIC_PERIOD_IN_SEC), statistic: 'Sum', unit: cloudwatch.Unit.COUNT})], 12),
             )
         }
     }
