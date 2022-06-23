@@ -61,7 +61,8 @@ export class EcsInfraConstrunct extends base.BaseConstruct {
                     name: 'id',
                     type: ddb.AttributeType.STRING
                 },
-                removalPolicy: cdk.RemovalPolicy.DESTROY // not recommended for Prod
+                removalPolicy: cdk.RemovalPolicy.DESTROY, // not recommended for Prod
+                // readCapacity: 50 // increase to prevent throttle in DDB
             });
         }
 
