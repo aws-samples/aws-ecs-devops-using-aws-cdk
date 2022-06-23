@@ -15,9 +15,9 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import * as codecommit from 'aws-cdk-lib/aws-codecommit';
-import * as ecr from 'aws-cdk-lib/aws-ecr';
-import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as codecommit from '@aws-cdk/aws-codecommit';
+import * as ecr from '@aws-cdk/aws-ecr';
+import * as ecs from '@aws-cdk/aws-ecs';
 
 import * as base from '../../lib/template/stack/base/base-stack';
 import { AppContext } from '../../lib/template/app-context';
@@ -29,7 +29,7 @@ export class EcsCicdStack extends base.BaseStack {
     constructor(appContext: AppContext, stackConfig: any) {
         super(appContext, stackConfig);
 
-        const ecsService = ecs.BaseService.fromServiceArnWithCluster(this, 'service', 'your-service-arn');
+        const ecsService = ecs.FargateService.fromFargateServiceArn(this, 'service', 'your-service-arn');
         const containerName = 'your-container-name';
 
         const gitRepo = codecommit.Repository.fromRepositoryName(this, 'git', 'your-repo-name');
