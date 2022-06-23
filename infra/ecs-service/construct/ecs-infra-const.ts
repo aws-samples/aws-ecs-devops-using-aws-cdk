@@ -116,6 +116,8 @@ export class EcsInfraConstrunct extends base.BaseConstruct {
 
         this.alb = albFargateService.loadBalancer;
         this.service = albFargateService.service;
+        // const scaling = this.service.autoScaleTaskCount()
+        // scaling.scaleOnRequestCount()
 
         this.putParameter(`${this.stackConfig.ShortStackName}AlbDnsName`, albFargateService.loadBalancer.loadBalancerDnsName);
         this.putParameter(`${this.stackConfig.ShortStackName}ServiceSecurityGroupId`, this.service.connections.securityGroups[0].securityGroupId);
