@@ -11,6 +11,11 @@ This sample suports both CDK Ver1 and CDK Ver2.
 
 - [aws-cdk-project-template-for-devops](https://github.com/aws-samples/aws-cdk-project-template-for-devops)
 
+Korean guide here:
+
+- Korean `Hands on Lab` Guide: [AWS-Builders-AWS-CDK-HoL-20210624.pdf](docs/hol/AWS-Builders-AWS-CDK-HoL-20210624.pdf)
+- Korean `Session` Video: [youtube AWS DevOps with CDK](https://www.youtube.com/watch?v=3DINoMNtGvI&t=207s)
+
 Other "Using AWS CDK" series can be found at:
 
 - [AWS Serverless Using AWS CDK](https://github.com/aws-samples/aws-serverless-using-aws-cdk)
