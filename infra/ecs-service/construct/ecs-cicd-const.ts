@@ -30,10 +30,13 @@ import * as base from '../../../lib/template/construct/base/base-construct'
 
 export interface EcsCicdProps extends base.ConstructCommonProps {
     service: ecs.IBaseService;
-    appPath: string;
     containerName: string;
     repo: codecommit.IRepository;
     ecrRepo: ecr.IRepository;
+    appPath?: string;
+    dockerfileName?: string;
+    buildCommands?: string[];
+    enableKeyRotation?: boolean
 }
 
 export class EcsCicdConstrunct extends base.BaseConstruct {
@@ -64,12 +67,13 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
         const deployAction = new actions.EcsDeployAction({
             actionName: 'ECS_ContainerDeploy',
             service: props.service,
-            imageFile: new codepipeline.ArtifactPath(buildOutput, `${props.appPath}/imagedefinitions.json`),
+            imageFile: new codepipeline.ArtifactPath(buildOutput, ( props.appPath ? `${props.appPath}/imagedefinitions.json` : 'imagedefinitions.json')),
             deploymentTimeout: cdk.Duration.minutes(60)
         });
 
         new codepipeline.Pipeline(this, 'ECSServicePipeline', {
             pipelineName: `${props.stackName}-Pipeline`,
+            enableKeyRotation: props.enableKeyRotation ? props.enableKeyRotation : true,
             stages: [
                 {
                     stageName: 'Source',
@@ -92,11 +96,24 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
     }
 
     private createBuildProject(ecrRepo: ecr.IRepository, props: EcsCicdProps): codebuild.Project {
+        const buildCommandsBefore = [
+            'echo "In Build Phase"',
+            'cd $APP_PATH',
+            'ls -l',
+        ];
+        const buildCommandsAfter = [
+            '$(aws ecr get-login --no-include-email)',
+            `docker build -f ${props.dockerfileName ? props.dockerfileName : 'Dockerfile'} -t $ECR_REPO_URI:$TAG .`,
+            'docker push $ECR_REPO_URI:$TAG'
+        ];
+
+        const appPath = props.appPath ? `${props.appPath}` : '.';
+
         const project = new codebuild.Project(this, 'DockerBuild', {
             projectName: `${props.stackName}DockerBuild`,
             environment: {
-                buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_2,
-                computeType: codebuild.ComputeType.LARGE,
+                buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_3,
+                computeType: codebuild.ComputeType.SMALL,
                 privileged: true
             },
             environmentVariables: {
@@ -107,7 +124,7 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
                     value: `${props.containerName}`
                 },
                 'APP_PATH': {
-                    value: `${props.appPath}`
+                    value: appPath
                 }
             },
             buildSpec: codebuild.BuildSpec.fromObject({
@@ -122,12 +139,9 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
                     },
                     build: {
                         commands: [
-                            'echo "In Build Phase"',
-                            'cd $APP_PATH',
-                            'ls -l',
-                            '$(aws ecr get-login --no-include-email)',
-                            `docker build -t $ECR_REPO_URI:$TAG .`,
-                            'docker push $ECR_REPO_URI:$TAG'
+                            ...buildCommandsBefore,
+                            ...(props.buildCommands ? props.buildCommands : []),
+                            ...buildCommandsAfter
                         ]
                     },
                     post_build: {
@@ -141,7 +155,7 @@ export class EcsCicdConstrunct extends base.BaseConstruct {
                 },
                 artifacts: {
                     files: [
-                        `${props.appPath}/imagedefinitions.json`
+                        `${appPath}/imagedefinitions.json`
                     ]
                 }
             }),
