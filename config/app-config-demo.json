@@ -2,8 +2,8 @@
     "Project": {
         "Name": "EcsProject",
         "Stage": "Demo",
-        "Account": "75157*******",
-        "Region": "ap-southeast-1",
+        "Account": "290444451957",
+        "Region": "us-east-1",
         "Profile": "cdk-demo"
     },
 
@@ -23,10 +23,10 @@
             "InfraVersion": "'1.0.0'",
             "DockerImageType": "HUB",
             "DockerImageType-Desc": "HUB or ECR or LOCAL",
-            
+
             "PortNumber": 80,
             "InternetFacing": false,
-            
+
             "AppPath": "codes/sample-backend-fastapi",
             "DesiredTasks": 1,
             "Cpu": 256,
@@ -47,12 +47,12 @@
             "InfraVersion": "'1.0.0'",
             "DockerImageType": "HUB",
             "DockerImageType-Desc": "HUB or ECR or LOCAL",
-            
+
             "PortNumber": 80,
             "InternetFacing": true,
 
             "TargetStack": "SampleBackendFastapiStack",
-            
+
             "AppPath": "codes/sample-frontend-flask",
             "DesiredTasks": 1,
             "Cpu": 256,
