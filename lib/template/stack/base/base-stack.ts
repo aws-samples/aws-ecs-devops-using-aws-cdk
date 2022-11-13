@@ -42,7 +42,7 @@ export class BaseStack extends cdk.Stack implements ICommonHelper, ICommonGuardi
     private commonHelper: ICommonHelper;
     private commonGuardian: ICommonGuardian;
 
-    constructor(appContext: AppContext, stackConfig: any) {
+    constructor(appContext: AppContext, stackConfig: StackConfig) {
         let newProps = BaseStack.getStackCommonProps(appContext, stackConfig);
         super(appContext.cdkApp, stackConfig.Name, newProps);
 
@@ -67,7 +67,7 @@ export class BaseStack extends cdk.Stack implements ICommonHelper, ICommonGuardi
         });
     }
 
-    private static getStackCommonProps(appContext: AppContext, stackConfig: any): StackCommonProps{
+    private static getStackCommonProps(appContext: AppContext, stackConfig: StackConfig): StackCommonProps{
         let newProps = appContext.stackCommonProps;
         if (stackConfig.UpdateRegionName) {
             console.log(`[INFO] Region is updated: ${stackConfig.Name} ->> ${stackConfig.UpdateRegionName}`);
@@ -85,7 +85,7 @@ export class BaseStack extends cdk.Stack implements ICommonHelper, ICommonGuardi
         return newProps;
     }
 
-    findEnumType<T>(enumType: T, target: string): T[keyof T] {
+    findEnumType<T extends object>(enumType: T, target: string): T[keyof T] {
         return this.commonHelper.findEnumType(enumType, target);
     }
 
@@ -115,5 +115,13 @@ export class BaseStack extends cdk.Stack implements ICommonHelper, ICommonGuardi
 
     createS3Bucket(baseName: string, suffix?: boolean, encryption?: s3.BucketEncryption, versioned?: boolean): s3.Bucket {
         return this.commonGuardian.createS3Bucket(baseName, suffix, encryption, versioned);
+    }
+
+    withStackName(baseName: string, delimiter='-'): string {
+        return `${this.stackName}${delimiter}${baseName}`;
+    }
+
+    withProjectPrefix(baseName: string, delimiter='-'): string {
+        return `${this.projectPrefix}${delimiter}${baseName}`;
     }
 }

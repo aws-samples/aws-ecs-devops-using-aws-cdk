@@ -22,12 +22,14 @@ import * as ssm from 'aws-cdk-lib/aws-ssm'
 
 
 export interface ICommonHelper {
-    findEnumType<T>(enumType: T, target: string): T[keyof T];
+    findEnumType<T extends object>(enumType: T, target: string): T[keyof T];
     exportOutput(key: string, value: string, prefixEnable?: boolean, prefixCustomName?: string): void;
     putParameter(paramKey: string, paramValue: string, prefixEnable?: boolean, prefixCustomName?: string): string;
     getParameter(paramKey: string, prefixEnable?: boolean, prefixCustomName?: string): string;
     putVariable(variableKey: string, variableValue: string): void;
     getVariable(variableKey: string): string;
+    withStackName(baseName: string, delimiter?: string): string;
+    withProjectPrefix(baseName: string, delimiter?: string): string;
 }
 
 export interface CommonHelperProps {
@@ -49,7 +51,7 @@ export class CommonHelper implements ICommonHelper {
         this.projectPrefix = props.projectPrefix;
     }
 
-    public findEnumType<T>(enumType: T, target: string): T[keyof T] {
+    public findEnumType<T extends object>(enumType: T, target: string): T[keyof T] {
         type keyType = keyof typeof enumType;
 
         const keyInString = Object.keys(enumType).find(key =>
@@ -117,5 +119,13 @@ export class CommonHelper implements ICommonHelper {
 
     public getVariable(variableKey: string): string {
         return this.props.variables[variableKey];
+    }
+
+    public withStackName(baseName: string, delimiter='-'): string {
+        return `${this.stackName}${delimiter}${baseName}`;
+    }
+
+    public withProjectPrefix(baseName: string, delimiter='-'): string {
+        return `${this.projectPrefix}${delimiter}${baseName}`;
     }
 }
