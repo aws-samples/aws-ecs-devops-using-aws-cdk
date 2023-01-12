@@ -443,7 +443,7 @@ For example, if you want to replace the database from DDB table to RDS database,
 Execute the following command, which will destroy all resources except ECR-Repository and DynamoDB Tables. So destroy these resources in AWS web console manually.
 
 ```bash
-sh ./script/destroy_stacks.sh config/app-config-demo.json
+sh ./scripts/destroy_stacks.sh config/app-config-demo.json
 ```
 
 In particular, `LoadTesterScriptStack` is currently under load-testing and should be deleted as soon as possible like this.
